@@ -290,11 +290,19 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
          轨道内容复制三段，滑出一整段就瞬间平移回来，所以永远滑不到头。 */
       /* 鼠标滚一格 deltaY≈100，累计满 100 就换一张卡（一格一卡，不漂移）。 */
       const WHEEL_THRESHOLD = 100;
-      const DAMPING = 0.12;
+      /* 每次换格用一段三次缓出：加速由浏览器合成层负责，落点收得住，
+         不像指数阻尼那样一上来就全速、停得又硬。 */
+      const STEP_BASE = 0.26;
+      const STEP_SPAN = 0.5;
       const MAX_ANGLE = 45;
       const MAX_DEPTH = 200;
       const MIN_SCALE = 0.8;
       const SIDE_OPACITY = 0.6;
+
+      let stepFrom = 0;
+      let stepStartAt = 0;
+      let stepDuration = 0.5;
+      let lastTargetRef = Number.NaN;
 
       let setWidth = 0;
       let pitch = 0;
@@ -372,7 +380,10 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
           const angle = -MAX_ANGLE * away * Math.sign(t);
           const depth = -MAX_DEPTH * away;
           const scale = 1 - (1 - MIN_SCALE) * away;
-          const opacity = 1 - (1 - SIDE_OPACITY) * away;
+          /* 越往两端越透明：到 |t|≈1.6 就完全化进黑里，
+             卡片在碰到视口边缘之前已经没了，边缘不会被切出一条直边。 */
+          const edgeFade = Math.min(1, Math.max(0, (Math.abs(t) - 1) / 0.6));
+          const opacity = (1 - (1 - SIDE_OPACITY) * away) * (1 - edgeFade);
 
           /* 侧格先往中轴收一点，再旋转后退：45deg 的侧转本身就把卡片
              往外甩，不收这一下左右邻居只剩一条边露在视口里。 */
@@ -451,17 +462,36 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
           targetX = anchor + Math.round((targetX - anchor) / pitch) * pitch;
         }
 
-        x += (targetX - x) * DAMPING;
+        /* 目标一变就重新起一段缓出：起点取当前帧的真实位置，
+           所以连滚几次也是接着走，不会跳回上一格的终点。 */
+        const now = performance.now();
+        if (targetX !== lastTargetRef) {
+          stepFrom = x;
+          stepStartAt = now;
+          stepDuration = STEP_BASE + Math.min(STEP_SPAN, Math.abs(targetX - x) / 2600);
+          lastTargetRef = targetX;
+        }
+        const progress = Math.min(1, (now - stepStartAt) / (stepDuration * 1000));
+        const eased = 1 - Math.pow(1 - progress, 3);
+        x = stepFrom + (targetX - stepFrom) * eased;
 
         // 无缝复位：x 落在一整段之外时平移回来，targetX 同步，阻尼不变。
         if (setWidth > 0) {
+          let wrapped = 0;
           while (x < anchor - setWidth) {
             x += setWidth;
             targetX += setWidth;
+            wrapped += setWidth;
           }
           while (x > anchor) {
             x -= setWidth;
             targetX -= setWidth;
+            wrapped -= setWidth;
+          }
+          /* 复位时起点与目标一起搬，缓出段不重新计时。 */
+          if (wrapped !== 0) {
+            stepFrom += wrapped;
+            lastTargetRef += wrapped;
           }
         }
 
