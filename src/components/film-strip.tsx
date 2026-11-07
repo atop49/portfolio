@@ -367,7 +367,9 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
 
           /* 右侧（t > 0）角度为负 → 卡片左转、朝内；左侧为正 → 右转、朝内。
              两侧同时后退并缩小，围出一个以中轴为圆心的弧。 */
-          const angle = -MAX_ANGLE * t;
+          /* 角度用夹紧后的 away 乘方向：|t|>1 的卡不会被转成 81° 的"一条边"，
+             而是停在 45° 侧立——左侧远端的胶片因此不会缩成一根细线。 */
+          const angle = -MAX_ANGLE * away * Math.sign(t);
           const depth = -MAX_DEPTH * away;
           const scale = 1 - (1 - MIN_SCALE) * away;
           const opacity = 1 - (1 - SIDE_OPACITY) * away;

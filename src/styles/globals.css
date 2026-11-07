@@ -370,25 +370,40 @@ html.detail-open .timeline-nav {
      上下各撑 6rem 再用负 margin 抵消，盒子够高、版面位置不变。 */
   padding-block: 6rem;
   margin-block: -6rem;
-  /* 胶片不是从屏幕边缘被"切"出来的：左右各留一段渐隐，
-     让片带朝画面外继续延伸，顺带压掉视口硬的切割线。
-     左侧留 15% 是因为透视点（10%）就在那边——不能被硬切。 */
-  -webkit-mask-image: linear-gradient(
+  /* 两侧不再是 mask：mask 会把整条片带变成一个"被遮罩的图层"，
+     滚轮拖动时浏览器按遮罩盒重采样，边缘会闪一下硬切再复原。
+     改成两片盖在上面的纯黑渐变——观感一样，但永远只是一层 paint。 */
+  position: relative;
+}
+
+.film-scroller::before,
+.film-scroller::after {
+  content: "";
+  position: absolute;
+  z-index: 20;
+  top: 0;
+  bottom: 0;
+  width: 12%;
+  pointer-events: none;
+  /* 片带背后是 .cine-backdrop 的纯黑，所以渐隐色必须也是纯黑。
+     只让最外侧约 60px 压死，往里迅速让开，卡片不至于整张被吃掉。 */
+  background: linear-gradient(
     to right,
-    transparent 0%,
-    #000 15%,
-    #000 85%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    #000 15%,
-    #000 85%,
-    transparent 100%
+    #000 0%,
+    rgb(0 0 0 / 0.6) 34%,
+    rgb(0 0 0 / 0) 100%
   );
 }
 
+.film-scroller::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    #000 0%,
+    rgb(0 0 0 / 0.6) 34%,
+    rgb(0 0 0 / 0) 100%
+  );
+}
 .film-track {
   display: flex;
   width: max-content;
