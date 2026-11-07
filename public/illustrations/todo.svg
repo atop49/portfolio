@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="todo-title">
+  <title id="todo-title">Dark editing suite with a task timeline on the monitor</title>
+  <defs>
+    <linearGradient id="todo-room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#191713"/>
+      <stop offset=".6" stop-color="#211e18"/>
+      <stop offset="1" stop-color="#15130f"/>
+    </linearGradient>
+    <linearGradient id="todo-screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26231d"/>
+      <stop offset="1" stop-color="#1b1914"/>
+    </linearGradient>
+    <linearGradient id="todo-desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a251d"/>
+      <stop offset="1" stop-color="#1a1712"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#todo-room)"/>
+  <!-- monitor -->
+  <rect x="250" y="120" width="1100" height="560" fill="#0d0c09"/>
+  <rect x="282" y="152" width="1036" height="496" fill="url(#todo-screen)"/>
+  <!-- monitor stand -->
+  <rect x="740" y="680" width="120" height="60" fill="#141210"/>
+  <rect x="640" y="740" width="320" height="18" fill="#141210"/>
+  <!-- header row inside screen -->
+  <text x="330" y="215" font-family="Georgia, serif" font-size="34" fill="#f5f1e8" opacity=".9">待办事项</text>
+  <text x="330" y="248" font-family="monospace" font-size="16" letter-spacing="4" fill="#8c877d">TODO STUDIO — TASK TIMELINE</text>
+  <!-- stats readouts -->
+  <g font-family="monospace" fill="#8c877d" font-size="15" letter-spacing="2">
+    <text x="1080" y="215">TOTAL 03</text>
+    <text x="1080" y="242">DONE 01</text>
+  </g>
+  <text x="1216" y="215" font-family="monospace" font-size="15" fill="#ff4d00">33%</text>
+  <!-- timeline rows -->
+  <g>
+    <rect x="330" y="300" width="940" height="2" fill="#f5f1e8" opacity=".14"/>
+    <rect x="330" y="292" width="34" height="18" fill="#8c877d" opacity=".6"/>
+    <text x="384" y="308" font-family="Georgia, serif" font-size="22" fill="#f5f1e8">整理硬盘素材备份</text>
+    <circle cx="1240" cy="301" r="7" fill="#ff4d00"/>
+    <text x="1200" y="307" font-family="monospace" font-size="14" fill="#ff4d00">HI</text>
+    <rect x="330" y="382" width="940" height="1" fill="#f5f1e8" opacity=".1"/>
+    <text x="384" y="390" font-family="Georgia, serif" font-size="22" fill="#f5f1e8" opacity=".75">输出客户提案样片</text>
+    <circle cx="1240" cy="383" r="7" fill="#8c877d" opacity=".7"/>
+    <rect x="330" y="464" width="940" height="1" fill="#f5f1e8" opacity=".1"/>
+    <text x="384" y="472" font-family="Georgia, serif" font-size="22" fill="#f5f1e8" opacity=".55" text-decoration="line-through">剪辑人物访谈粗剪</text>
+    <rect x="364" y="458" width="20" height="20" fill="none" stroke="#ff4d00" stroke-width="3"/>
+    <path d="m369 468 5 6 9-12" stroke="#ff4d00" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- playhead sweeping the rows -->
+  <rect x="330" y="286" width="3" height="200" fill="#ff4d00"/>
+  <!-- desk with keyboard + coffee -->
+  <rect y="758" width="1600" height="142" fill="url(#todo-desk)"/>
+  <rect x="560" y="790" width="480" height="34" rx="6" fill="#211e18"/>
+  <g fill="#2e2a22">
+    <rect x="590" y="798" width="60" height="8" rx="3"/>
+    <rect x="670" y="798" width="60" height="8" rx="3"/>
+    <rect x="750" y="798" width="60" height="8" rx="3"/>
+    <rect x="830" y="798" width="60" height="8" rx="3"/>
+    <rect x="910" y="798" width="100" height="8" rx="3"/>
+  </g>
+  <ellipse cx="1240" cy="812" rx="52" ry="14" fill="#0d0c09"/>
+  <path d="M1196 812h88l-10 44h-68z" fill="#211e18"/>
+  <ellipse cx="1240" cy="812" rx="40" ry="9" fill="#3d2c1a"/>
+  <!-- room glow from screen -->
+  <rect x="250" y="120" width="1100" height="560" fill="none" stroke="#f5f1e8" opacity=".06"/>
+</svg>

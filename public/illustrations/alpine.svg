@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="alpine-title">
+  <title id="alpine-title">Layered vector sunset over alpine ridges and a still lake</title>
+  <defs>
+    <linearGradient id="alpine-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#24123f"/>
+      <stop offset=".42" stop-color="#6b2f73"/>
+      <stop offset=".72" stop-color="#e0605e"/>
+      <stop offset="1" stop-color="#ffc05f"/>
+    </linearGradient>
+    <radialGradient id="alpine-sun" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff5c2"/>
+      <stop offset=".45" stop-color="#ffc95c"/>
+      <stop offset="1" stop-color="#ff6d5a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="alpine-lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d3764"/>
+      <stop offset=".6" stop-color="#1b2f44"/>
+      <stop offset="1" stop-color="#08131f"/>
+    </linearGradient>
+    <linearGradient id="alpine-ridge-a" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a84d79"/>
+      <stop offset="1" stop-color="#522a5b"/>
+    </linearGradient>
+    <linearGradient id="alpine-ridge-b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f08a62"/>
+      <stop offset="1" stop-color="#7b335f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#alpine-sky)"/>
+  <circle cx="1080" cy="300" r="320" fill="url(#alpine-sun)" opacity=".7"/>
+  <circle cx="1080" cy="300" r="126" fill="#ffd77a"/>
+  <g fill="#ffc98a" opacity=".35">
+    <path d="M70 210h410c34 0 58 18 58 42s-26 42-60 42H70z"/>
+    <path d="M860 150h320c26 0 46 14 46 32s-20 32-46 32H860z" opacity=".65"/>
+  </g>
+  <path d="M0 560 190 370l190 130 180-200 190 160 190-220 210 220 150-130 180 140v190H0z" fill="url(#alpine-ridge-a)" opacity=".75"/>
+  <path d="M0 640 190 470l170 90 190-150 200 140 210-190 220 190 170-100 170 130v180H0z" fill="url(#alpine-ridge-b)"/>
+  <g fill="#ffe3b3">
+    <path d="m400 360 90-120 90 120-60-24-30 32-30-32z" opacity=".9"/>
+    <path d="m820 390 90-130 100 130-62-26-38 30-34-30z" opacity=".82"/>
+    <path d="m1210 460 70-92 78 92-50-18-28 24-24-24z" opacity=".8"/>
+  </g>
+  <path d="M0 720c220-52 430-48 640 0 210 48 430 50 650 0 110-24 220-28 310-8v188H0z" fill="#1a182b"/>
+  <path d="M0 900V760c230-30 450-24 660 20 210 44 430 44 660-4 100-20 190-24 280-16v140z" fill="url(#alpine-lake)"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M160 790c140-16 280-16 420 0s280 16 420 0 280-16 420 0" stroke="#e28a75" stroke-width="6" opacity=".42"/>
+    <path d="M80 840c190-14 380-14 570 0s380 14 570 0 210-10 300-4" stroke="#f6c88a" stroke-width="4" opacity=".3"/>
+  </g>
+  <g fill="#0a0d15">
+    <path d="M0 900V720c80-42 150-32 210 10 68 48 100 108 128 170z"/>
+    <path d="M1600 900V690c-76-18-140 12-190 58-58 54-88 98-118 152z"/>
+    <path d="M690 900c10-52 34-92 70-122 22-18 36-42 36-70 0 34 18 60 50 84 40 30 68 68 80 108z" opacity=".8"/>
+  </g>
+  <g fill="none" stroke="#1a1220" stroke-width="8" stroke-linecap="round">
+    <path d="M380 190c20-18 40-18 60 0M500 145c18-16 36-16 54 0M620 215c16-14 32-14 48 0"/>
+  </g>
+</svg>

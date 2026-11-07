@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="notes-title">
+  <title id="notes-title">Bright study desk with an open notebook and morning light</title>
+  <defs>
+    <linearGradient id="notes-wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7f3ea"/>
+      <stop offset="1" stop-color="#efe9dc"/>
+    </linearGradient>
+    <linearGradient id="notes-desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e7dfcf"/>
+      <stop offset="1" stop-color="#d9cfba"/>
+    </linearGradient>
+    <linearGradient id="notes-window" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdfaf3"/>
+      <stop offset="1" stop-color="#f2ecdf"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#notes-wall)"/>
+  <!-- window with morning light -->
+  <rect x="980" y="80" width="460" height="420" fill="url(#notes-window)" stroke="#111111" stroke-opacity=".18" stroke-width="6"/>
+  <line x1="1210" y1="80" x2="1210" y2="500" stroke="#111111" stroke-opacity=".18" stroke-width="5"/>
+  <line x1="980" y1="290" x2="1440" y2="290" stroke="#111111" stroke-opacity=".18" stroke-width="5"/>
+  <!-- light shaft -->
+  <path d="M980 500 620 900h560z" fill="#fff8e8" opacity=".55"/>
+  <!-- notebook: open book on the desk -->
+  <g>
+    <rect x="240" y="360" width="620" height="430" fill="#ffffff" stroke="#111111" stroke-opacity=".16" stroke-width="3"/>
+    <rect x="240" y="360" width="620" height="64" fill="#faf7f0"/>
+    <rect x="240" y="424" width="620" height="2" fill="#111111" fill-opacity=".2"/>
+    <text x="288" y="404" font-family="Georgia, serif" font-size="30" fill="#111111">欢迎使用 Notes Studio</text>
+    <text x="288" y="470" font-family="monospace" font-size="15" letter-spacing="3" fill="#8c877d">PREVIEW</text>
+    <!-- magazine body lines -->
+    <g fill="#111111">
+      <rect x="288" y="510" width="520" height="8" opacity=".82"/>
+      <rect x="288" y="540" width="500" height="8" opacity=".82"/>
+      <rect x="288" y="570" width="535" height="8" opacity=".82"/>
+      <rect x="288" y="600" width="430" height="8" opacity=".82"/>
+    </g>
+    <!-- h2 + orange list markers -->
+    <text x="288" y="668" font-family="Georgia, serif" font-size="24" fill="#111111">试试这些</text>
+    <circle cx="296" cy="700" r="5" fill="#ff4d00"/>
+    <rect x="316" y="696" width="380" height="7" fill="#111111" opacity=".7"/>
+    <circle cx="296" cy="732" r="5" fill="#ff4d00"/>
+    <rect x="316" y="728" width="300" height="7" fill="#111111" opacity=".7"/>
+  </g>
+  <!-- notebook page stack edge -->
+  <rect x="232" y="356" width="636" height="14" fill="#e0d8c6"/>
+  <rect x="232" y="782" width="636" height="14" fill="#e0d8c6"/>
+  <!-- coffee cup on desk -->
+  <ellipse cx="1130" cy="806" rx="66" ry="16" fill="#111111" opacity=".08"/>
+  <path d="M1082 742h96l-12 64h-72z" fill="#ffffff" stroke="#111111" stroke-opacity=".16" stroke-width="3"/>
+  <ellipse cx="1130" cy="742" rx="48" ry="11" fill="#8a5a34"/>
+  <!-- pencil -->
+  <g transform="rotate(-8 620 830)">
+    <rect x="520" y="822" width="220" height="14" rx="7" fill="#ff4d00"/>
+    <path d="m740 822 26 7-26 7z" fill="#e8c9a0"/>
+    <rect x="500" y="822" width="24" height="14" rx="7" fill="#d9cfba"/>
+  </g>
+  <!-- desk -->
+  <rect y="820" width="1600" height="80" fill="url(#notes-desk)"/>
+</svg>

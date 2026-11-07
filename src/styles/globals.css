@@ -1,0 +1,2497 @@
+@import "tailwindcss";
+
+/* 设计 Token（原始值） */
+:root {
+  --ink: #111111;
+  --bg-primary: #111111;
+  --text-primary: #f5f1e8;
+  --text-secondary: #8c877d;
+  --paper: var(--text-primary);
+  --muted: var(--text-secondary);
+  --on-media: #f5f1e8;
+  --accent: #ff4d00;
+  --card: #1a1a1a;
+  --hairline: rgba(245, 241, 232, 0.12);
+  /* 相纸投影：亮底加深形成错层，暗底收敛成近黑压边。 */
+  --media-shadow-rgb: 0 0 0;
+  --media-shadow-a1: 0.25;
+  --media-shadow-a2: 0.3;
+  /* 银盐颗粒：一次生成、胶片帧与检片台共用，避免两处纹理密度不一致。 */
+  --grain-uri: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23grain)'/%3E%3C/svg%3E");
+  --font-serif-stack:
+    Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC",
+    "Songti SC", "SimSun", serif;
+  --page-gutter: clamp(1.25rem, 3vw, 3.25rem);
+  --stage-pad-block: clamp(3.5rem, 14vh, 9rem);
+}
+
+/* 亮色台面上相纸需要更重的投影，否则会跟背景糊成一片。 */
+html[data-surface-tone="light"] {
+  --media-shadow-a1: 0.3;
+  --media-shadow-a2: 0.36;
+}
+
+/* 将 Token 映射为 Tailwind 主题（可用 bg-ink / text-paper / border-hairline 等） */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-card: var(--card);
+  --color-hairline: var(--hairline);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-serif: var(--font-serif-stack);
+}
+
+@layer base {
+  html {
+    background-color: var(--bg-primary);
+    color-scheme: dark;
+    scrollbar-gutter: stable;
+    transition:
+      background-color 800ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html.detail-open {
+    color-scheme: light;
+  }
+
+  html.detail-open,
+  html.detail-open body {
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    transition:
+      background-color 800ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 800ms cubic-bezier(0.22, 1, 0.36, 1);
+    color: var(--paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Text tokens invert with the detail theme; keep the transition on the
+     text-bearing nodes because they set their own color. */
+  @media (prefers-reduced-motion: no-preference) {
+    .film-brand,
+    .film-header-meta,
+    .film-hint,
+    .film-kicker,
+    .frame-kicker,
+    .frame-title,
+    .frame-meta,
+    .frame-index,
+    .film-detail-title,
+    .film-detail-meta,
+    .film-detail-description,
+    .film-detail-corner {
+      transition: color 800ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+}
+
+/* 全局降级动画，作为 prefers-reduced-motion 的兜底 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The inspection view has its own four-corner micro-copy. This must stay
+   unlayered so it wins over the unlayered .film-header/.film-hint rules. */
+html.detail-open .film-header,
+html.detail-open .film-hint {
+  opacity: 0 !important;
+  visibility: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   项目胶片条
+   使用全局类名而非 CSS Modules：本项目的 Turbopack 规则把 *.css 交给
+   Tailwind 处理，CSS Modules 的映射会失效。
+   -------------------------------------------------------------------------- */
+.film-runway {
+  position: relative;
+  z-index: 1;
+  /* 胶片带由滚轮直接驱动（无限循环），页面本身不再滚动：
+     这一段就是整屏，不再需要几屏高的"跑道"。 */
+  height: 100svh;
+  /* The body carries the theme colour; the runway stays transparent so the
+     fixed cinematic backdrop can show through. */
+  background-color: transparent;
+}
+
+.film-stage {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  padding-block: clamp(2rem, 4vh, 3rem);
+}
+
+.film-header {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--page-gutter);
+  pointer-events: none;
+}
+
+/* 字体分工：serif=标题，Geist=标签/按钮，Mono=数字/时间码。 */
+.film-brand,
+.film-header-meta {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.film-brand {
+  color: var(--paper);
+  opacity: 1;
+}
+
+.film-viewport {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  /* 上下留白：hover 放大时不被 stage 的 overflow: hidden 裁切。 */
+  padding-block: var(--stage-pad-block);
+}
+
+.film-scroller {
+  width: 100%;
+  min-width: 0;
+  /* 暗房里的透视：视点压在画面左侧，整条底片朝右后方退。
+     于是左端卡片离镜头最近（最大、最清晰），右端一直缩进深处。 */
+  perspective: 1200px;
+  perspective-origin: 0% 50%;
+  /* mask 只作用于元素自身的盒子，投影长在盒子外就会被一起裁掉。
+     上下各撑 6rem 再用负 margin 抵消，盒子够高、版面位置不变。 */
+  padding-block: 6rem;
+  margin-block: -6rem;
+  /* 胶片不是从屏幕边缘被"切"出来的：左右各留一段渐隐，
+     让片带朝画面外继续延伸，顺带压掉视口硬的切割线。 */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 clamp(1.5rem, 5vw, 5rem),
+    #000 calc(100% - clamp(1.5rem, 5vw, 5rem)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 clamp(1.5rem, 5vw, 5rem),
+    #000 calc(100% - clamp(1.5rem, 5vw, 5rem)),
+    transparent 100%
+  );
+}
+
+.film-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  /* 12px 的黑缝：帧与帧之间不再相连，每一格是一段被剪下来的底片。
+     缝里透的是页面底色，不是片基色——切片感来自这个"断开"。 */
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background-color: transparent;
+  /* 3D 上下文交给 GSAP 写入的 rotateX/rotateY；卡片靠 translateZ 从带子里抽出来。
+     镜头在左侧，所以旋转轴钉在轨道左端——否则 33 帧（≈1.4 万 px）绕自身中心
+     旋转，可见区会被甩出画面。 */
+  transform-style: preserve-3d;
+  transform-origin: 0% 50%;
+}
+
+.film-frame {
+  flex: none;
+  width: clamp(360px, 28vw, 420px);
+  /* 让 .frame-card 的 translateZ 参与同一条透视，而不是被拍平。 */
+  transform-style: preserve-3d;
+  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* --------------------------------------------------------------------------
+   胶片帧：双层静帧 + 显影 + 断口
+   -------------------------------------------------------------------------- */
+.frame-card {
+  position: relative;
+  display: flex;
+  height: auto;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--ink);
+  isolation: isolate;
+  perspective: 1100px;
+  perspective-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  /* 一格底片压在黑底上：贴地的一层暗影让它浮起来。 */
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.7);
+  transition:
+    transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 240ms ease;
+}
+
+/* 片基表面的塑料反光：一条 110° 的极细斜光扫过整格。
+   纯装饰层，不吃指针事件，也不跟 hover 一起动——底片本身的反射是静止的。 */
+.frame-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.04) 40%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* 齿孔带：24px 高的片基，比画幅亮一档（var(--card) = #1a1a1a）。
+   孔洞用 luminance 蒙版真的打穿——透出来的是卡片背后的 #111，不是画上去的方块。
+   mask 用内联 SVG 而不是 repeating-linear-gradient：只有 SVG 能在 10×8 的孔上
+   做出 2px 圆角（线性渐变只能切直角），而孔缘的弧度正是"打孔"与"画方框"的区别。 */
+.frame-sprocket {
+  position: relative;
+  z-index: 4;
+  flex: none;
+  height: var(--sprocket-h, 24px);
+  background-color: var(--card);
+  /* 片基不是一块纯色：上沿受光、下沿转暗，才看得出厚度。 */
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.045) 0%,
+    transparent 46%,
+    rgb(0 0 0 / 0.34) 100%
+  );
+  /* inset 阴影会被蒙版一起裁掉，只在孔洞四周留下压暗的一圈，
+     于是每个孔都像从背面打进去的。 */
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.8);
+  pointer-events: none;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='24'%3E%3Crect width='26' height='24' fill='white'/%3E%3Crect x='8' y='8' width='10' height='8' rx='2' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='24'%3E%3Crect width='26' height='24' fill='white'/%3E%3Crect x='8' y='8' width='10' height='8' rx='2' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+  -webkit-mask-position: left center;
+  mask-position: left center;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-size: 26px 24px;
+  mask-size: 26px 24px;
+}
+
+.frame-sprocket-top {
+  /* 上沿一道受光、下沿压暗并向画幅投一条硬影：
+     齿孔带就有了把画面"卡住"的厚度。 */
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    inset 0 -1px 0 rgb(0 0 0 / 0.5),
+    0 1px 0 rgb(0 0 0 / 0.55);
+}
+
+.frame-sprocket-bottom {
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    inset 0 -1px 0 rgb(0 0 0 / 0.5),
+    0 -1px 0 rgb(0 0 0 / 0.55);
+}
+
+/* 16:9 画幅紧贴在两条齿孔带之间。显影光被裁在这个窗口里，不会溢出到孔带。
+   画幅比片基低一层：内发丝线 + 内投影，边缘才不会像贴上去的贴纸。 */
+.frame-window {
+  position: relative;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background-color: var(--ink);
+  /* 画幅比片基低一层：一圈内发丝线 + 内投影。
+     顶边那道 0.06 的白线是片基切口的厚度反光，画面因此"陷"在两条孔带之间。 */
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    inset 0 0 0 1px rgb(from var(--text-primary) r g b / 0.05),
+    inset 0 0 1.75rem rgb(0 0 0 / 0.22);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.frame-window::before {
+  content: "";
+  position: absolute;
+  inset: -40% -70%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 45%,
+    rgb(255 255 255 / 0.07) 50%,
+    transparent 55%
+  );
+  transform: translateX(-55%) skewX(-8deg);
+  transition:
+    transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 180ms ease;
+}
+
+/* 银盐颗粒：每帧画幅共用一层噪点，密度与检片台一致。
+   极低不透明度，只在放大/贴近时感觉得到，目的是去掉矢量图那种"塑料感"。 */
+.frame-window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background-image: var(--grain-uri);
+  background-size: 160px 160px;
+  mix-blend-mode: overlay;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.frame-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--ink);
+}
+
+.frame-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  /* 默认是一张高反差的直印黑白：压暗、提对比、彻底去色。
+     数码感来自"灰蒙蒙的中灰"，所以亮度压到 0.75，让黑真正落下去。 */
+  filter: grayscale(100%) contrast(1.3) brightness(0.75);
+  /* 只过渡 filter——不加 opacity/transform 一起动，显影才不会闪。 */
+  transition: filter 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.frame-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(
+      rgb(from var(--ink) r g b / 0.2),
+      rgb(from var(--ink) r g b / 0.2)
+    ),
+    linear-gradient(
+      180deg,
+      rgb(from var(--ink) r g b / 0.55) 0%,
+      transparent 30%
+    ),
+    linear-gradient(
+      0deg,
+      rgb(from var(--ink) r g b / 0.94) 0%,
+      rgb(from var(--ink) r g b / 0.46) 36%,
+      transparent 76%
+    );
+  pointer-events: none;
+}
+
+.frame-index {
+  position: absolute;
+  top: clamp(1rem, 1.8vw, 1.5rem);
+  left: clamp(1rem, 1.8vw, 1.5rem);
+  z-index: 3;
+  font-family: var(--font-jetbrains-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.frame-copy {
+  position: absolute;
+  bottom: clamp(1rem, 1.8vw, 1.5rem);
+  left: clamp(1rem, 1.8vw, 1.5rem);
+  z-index: 3;
+  display: flex;
+  max-width: 58%;
+  flex-direction: column;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.frame-kicker,
+.film-kicker {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.frame-title {
+  font-family:
+    var(--font-youshe), "YouSheBiaoTiHei", Impact, sans-serif;
+  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  color: var(--paper);
+}
+
+.frame-title-line {
+  display: block;
+}
+
+.frame-title-line.is-second {
+  padding-left: 0.3em;
+}
+
+/* During the reverse Flip the frame keeps its title box, but the flying
+   clone owns the visible glyphs until the handoff. */
+.frame-card.is-title-returning .frame-title {
+  opacity: 0 !important;
+}
+
+.frame-meta {
+  font-family: var(--font-jetbrains-mono);
+  font-size: 0.625rem;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.frame-actions {
+  position: absolute;
+  right: clamp(1rem, 1.8vw, 1.5rem);
+  bottom: clamp(1rem, 1.8vw, 1.5rem);
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition:
+    opacity 220ms ease,
+    transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* --------------------------------------------------------------------------
+   Explore trigger：Aristide Benoist 式极简触发器。
+   只有文字、一根发丝线和一个加号，无任何底色块。
+   Hover：下划线收缩消失、竖线上滑淡出、加号旋转 90° 变橙箭头。
+   -------------------------------------------------------------------------- */
+.explore-trigger {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.9rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* 行内变体：标签与箭头同排，用于操作区。 */
+.explore-trigger--row {
+  flex-direction: row;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.35rem 0.4rem;
+}
+
+.explore-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--text-primary);
+  padding-bottom: 0.25rem;
+  transition:
+    border-color 300ms ease-out,
+    color 300ms ease-out;
+}
+
+.explore-stem {
+  width: 1px;
+  height: 1.5rem;
+  margin-block: 0.65rem;
+  background-color: var(--text-primary);
+  opacity: 0.2;
+  transition:
+    transform 300ms ease-out,
+    opacity 300ms ease-out;
+}
+
+.explore-trigger--row .explore-stem {
+  width: 0.9rem;
+  height: 1px;
+  margin-block: 0;
+}
+
+.explore-plus {
+  position: relative;
+  width: 0.9rem;
+  height: 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 0.9rem;
+}
+
+.explore-plus-glyph,
+.explore-play-glyph {
+  position: absolute;
+  inset: 0;
+  display: block;
+  text-align: center;
+  transition:
+    transform 300ms ease-out,
+    opacity 300ms ease-out,
+    color 300ms ease-out;
+}
+
+.explore-play-glyph {
+  opacity: 0;
+  transform: translateX(-0.3rem) scale(0.6);
+  color: var(--accent);
+  font-size: 0.625rem;
+  line-height: 0.9rem;
+}
+
+.explore-trigger:hover .explore-label,
+.explore-trigger:focus-visible .explore-label {
+  border-color: transparent;
+  color: var(--accent);
+}
+
+.explore-trigger:hover .explore-stem,
+.explore-trigger:focus-visible .explore-stem {
+  transform: translateY(-0.625rem);
+  opacity: 0;
+}
+
+.explore-trigger:hover .explore-plus-glyph,
+.explore-trigger:focus-visible .explore-plus-glyph {
+  transform: rotate(90deg);
+  opacity: 0;
+}
+
+.explore-trigger:hover .explore-play-glyph,
+.explore-trigger:focus-visible .explore-play-glyph {
+  opacity: 1;
+  transform: translateX(0.05em) scale(1);
+}
+
+.explore-trigger:focus-visible {
+  outline: 1px solid rgb(21 19 15 / 0.55);
+  outline-offset: 4px;
+}
+
+/* 左右两侧小字元数据，绝对定位于触发器两端。 */
+.explore-meta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.625rem;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  opacity: 0.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.explore-meta-left {
+  right: calc(100% + clamp(1.5rem, 6vw, 5rem));
+}
+
+.explore-meta-right {
+  left: calc(100% + clamp(1.5rem, 6vw, 5rem));
+}
+
+.explore-trigger--row .explore-meta {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explore-label,
+  .explore-stem,
+  .explore-plus-glyph,
+  .explore-play-glyph {
+    transition: none;
+  }
+}
+.frame-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  border: 1px solid transparent;
+  padding: 0.4rem 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.frame-action-primary {
+  border-color: var(--accent);
+  border-radius: 999px;
+  background-color: var(--accent);
+  color: var(--ink);
+  overflow: hidden;
+  padding-inline: 1.15rem;
+}
+
+.frame-action-secondary {
+  border-color: rgb(245 241 232 / 0.3);
+  background-color: rgb(17 17 17 / 0.72);
+  color: var(--paper);
+}
+
+.frame-action-text {
+  border-color: transparent;
+  background-color: transparent;
+  color: rgb(245 241 232 / 0.78);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.frame-action:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 3px;
+}
+
+/* A moving light sweep across the label only; button colors are untouched. */
+@property --btn-shimmer-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+
+.btn-shimmer {
+  --btn-shimmer-x: 100%;
+  display: inline-block;
+  -webkit-mask-image: linear-gradient(
+    -75deg,
+    white calc(var(--btn-shimmer-x) + 20%),
+    transparent calc(var(--btn-shimmer-x) + 30%),
+    white calc(var(--btn-shimmer-x) + 100%)
+  );
+  mask-image: linear-gradient(
+    -75deg,
+    white calc(var(--btn-shimmer-x) + 20%),
+    transparent calc(var(--btn-shimmer-x) + 30%),
+    white calc(var(--btn-shimmer-x) + 100%)
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: btn-shimmer 3s linear infinite;
+}
+
+@keyframes btn-shimmer {
+  0% {
+    --btn-shimmer-x: 100%;
+  }
+  50%,
+  100% {
+    --btn-shimmer-x: -100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-shimmer {
+    animation: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* 透明点击层：整帧只有一个 Tab 停靠点。 */
+.frame-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.frame-hit:focus-visible {
+  outline: none;
+}
+
+/* hover / 键盘 focus 的显影与断开。移动端不进入这段媒体查询。
+   `is-just-closed` keeps the source developed for one short beat after the
+   close, but a mouse-restored programmatic focus does not pin it there. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .frame-card:hover,
+  .frame-card:has(.frame-hit:focus-visible),
+  .frame-card.is-just-closed {
+    /* 只抬 3%、上移 4px、再抽高 40px：像一只手把这一格从片带里捏起来，
+       放大太多就又变回"网页卡片 hover 变大的套路"。 */
+    transform: scale(1.02) translateZ(50px);
+    box-shadow:
+      0 6px 14px rgb(0 0 0 / 0.6),
+      0 20px 44px rgb(0 0 0 / 0.8);
+  }
+
+  /* 抬起来的那一格必须压在邻帧之上，否则放大的边会被右边的帧盖住。 */
+  .film-frame:has(.frame-card:hover),
+  .film-frame:has(.frame-card:has(.frame-hit:focus-visible)),
+  .film-frame:has(.frame-card.is-just-closed) {
+    z-index: 3;
+  }
+
+  .frame-card:hover .frame-window::before,
+  .frame-card:has(.frame-hit:focus-visible) .frame-window::before,
+  .frame-card.is-just-closed .frame-window::before {
+    opacity: 1;
+    transform: translateX(55%) skewX(-8deg);
+  }
+
+  /* 显影：黑白直印在 300ms 里彻底转成彩色，亮度同时回到 1.0。 */
+  .frame-card:hover .frame-image,
+  .frame-card:has(.frame-hit:focus-visible) .frame-image,
+  .frame-card.is-just-closed .frame-image {
+    filter: grayscale(0%) contrast(1.1);
+  }
+
+  .frame-card:hover .frame-actions,
+  .frame-card:has(.frame-hit:focus-visible) .frame-actions,
+  .frame-card.is-just-closed .frame-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  /* 其余帧收一档亮度，但不压到黑：底片还是底片，只是当前这格被灯照到。 */
+  .film-track:has(.frame-card:hover) .frame-card,
+  .film-track:has(.frame-card:has(.frame-hit:focus-visible)) .frame-card,
+  .film-track:has(.frame-card.is-just-closed) .frame-card {
+    opacity: 0.62;
+  }
+
+  .film-track:has(.frame-card:hover) .frame-card:hover,
+  .film-track:has(.frame-card:has(.frame-hit:focus-visible))
+    .frame-card:has(.frame-hit:focus-visible),
+  .film-track:has(.frame-card.is-just-closed) .frame-card.is-just-closed {
+    opacity: 1;
+  }
+  /* 没被抽出来的帧退后 20px：透视会把这点 Z 差放大成清晰的前后层次。 */
+  .film-track:has(.frame-card:hover) .frame-card:not(:hover),
+  .film-track:has(.frame-card:has(.frame-hit:focus-visible))
+    .frame-card:not(:has(.frame-hit:focus-visible)),
+  .film-track:has(.frame-card.is-just-closed)
+    .frame-card:not(.is-just-closed) {
+    transform: translateZ(-20px);
+  }
+
+  .film-frame:has(+ .film-frame .frame-card:hover),
+  .film-frame:has(+ .film-frame .frame-card:has(.frame-hit:focus-visible)),
+  .film-frame:has(+ .film-frame .frame-card.is-just-closed) {
+    transform: translateX(-10px);
+  }
+
+  .film-frame:has(.frame-card:hover) + .film-frame,
+  .film-frame:has(.frame-card:has(.frame-hit:focus-visible)) + .film-frame,
+  .film-frame:has(.frame-card.is-just-closed) + .film-frame {
+    transform: translateX(10px);
+  }
+}
+/* 景深：卷轴远端（视口右侧）的帧失焦并退进暗部。
+   blur 只加在卡片自身——加在 .film-frame 上会生成压平组，把卡片的 translateZ 吃掉。 */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .frame-card.is-deep:not(:hover):not(:has(.frame-hit:focus-visible)) {
+    filter: blur(1px);
+    opacity: 0.6;
+  }
+}
+
+/* 检片台打开时，其余帧退让。源帧保持原几何尺寸但整帧透明，
+   这样正向 Flip 与反向 Flip 的起止矩形始终一致。 */
+.film-stage.is-inspecting .frame-card:not(.is-source-hidden) {
+  opacity: 0.2;
+  transform: scale(0.96);
+  transition:
+    opacity 400ms ease,
+    transform 400ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* `overflow:hidden` on <html> changes the sticky containing block. Pin the
+   stage during the inspection/return so the source frame keeps its viewport rect
+   while the page is scroll-locked. */
+.film-stage.is-inspecting,
+.film-stage.is-returning {
+  position: fixed;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 100svh;
+}
+
+.film-stage.is-returning .frame-card:not(.is-source-hidden) {
+  /* The source gets focus back at the end of the exit, so its neighbours are
+     already heading to the active-frame dim (0.35), not to full brightness. */
+  opacity: 0.35;
+  transform: none;
+  transition:
+    opacity 400ms ease,
+    transform 400ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.frame-card.is-source-hidden {
+  opacity: 0 !important;
+  visibility: hidden;
+  transition: none !important;
+}
+
+/* Restore the source frame with a short 200ms crossfade instead of replaying
+   the 240ms base opacity fade or snapping on at the tail of the return Flip.
+   Keep the transform transition: focus returns to the frame after the Flip, so
+   its 1.1 active scale must grow smoothly. */
+.frame-card.is-source-restored {
+  opacity: 1 !important;
+  transition:
+    transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 200ms ease !important;
+}
+
+/* Optional static depth. Never transition filter; toggle the class instead. */
+.frame-card.is-depth {
+  filter: blur(2px);
+}
+
+.film-hint {
+  position: absolute;
+  right: var(--page-gutter);
+  bottom: var(--page-gutter);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.film-hint-arrow {
+  color: var(--muted);
+}
+
+.film-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   检片台：点击帧后由 GSAP Flip 放大到这里
+   -------------------------------------------------------------------------- */
+.film-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition:
+    background-color 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  /* 相纸投影会向左右溢出一点，裁掉列向溢出，避免出现横向滚动条。 */
+  overflow-x: clip;
+  overscroll-behavior: contain;
+  padding: clamp(3rem, 8vh, 6rem) clamp(1rem, 1.5vw, 1.75rem);
+}
+
+/* 检片台打开时锁定页面滚动。 */
+.film-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: #080808;
+  backdrop-filter: blur(12px) saturate(0.7);
+}
+
+.film-detail-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 100%;
+  margin-block: 0;
+  /* Information sits left, the inspection image docks right. The media stays
+     the same Flip target; only its grid column changes. */
+  grid-template-columns: minmax(17rem, 0.5fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 3vw, 3.5rem);
+}
+
+/* 相纸质感：一行细切边 + 两层刚度不同的悬浮投影。
+   投影位移由 --media-lift-x/y 驱动，指针经过时朝反方向让开，
+   纸面因此有了离开台面的高度差。 */
+.film-detail-media {
+  position: relative;
+  z-index: 1;
+  order: 2;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  /* 纸面自己在倾斜，所以边框和裁切都交给 plate；
+     容器只负责透视、投影和网格定位。 */
+  border-radius: 4px;
+  background-color: transparent;
+  perspective: 1400px;
+  --media-lift-x: 0px;
+  --media-lift-y: 0px;
+  box-shadow:
+    var(--media-lift-x) calc(1.875rem + var(--media-lift-y)) 3.75rem -0.75rem
+      rgb(var(--media-shadow-rgb) / var(--media-shadow-a1)),
+    calc(var(--media-lift-x) * 0.6) calc(1.125rem + var(--media-lift-y) * 0.6)
+      2.25rem -1.125rem rgb(var(--media-shadow-rgb) / var(--media-shadow-a2));
+  transform-origin: 50% 50%;
+  transition: box-shadow 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 纸面本体：图片、切边、压边、颗粒都在这一层，倾斜时整张纸一起动。 */
+.film-detail-media-plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgb(from var(--text-primary) r g b / 0.12);
+  border-radius: 4px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* 内侧压边：图片边缘不再刺眼，向纸面里沉一点点。 */
+.film-detail-media-plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 1.25rem rgb(0 0 0 / 0.05),
+    inset 0 0 0 1px rgb(0 0 0 / 0.06);
+  pointer-events: none;
+}
+
+/* 玻璃反光：一条斜向高光，指针进入时从左扫到右，移出即隐去。 */
+.film-detail-media-plate::after {
+  content: "";
+  position: absolute;
+  inset: -20% -70%;
+  z-index: 4;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.15) 25%,
+    transparent 30%
+  );
+  opacity: 0;
+  transform: translateX(-60%);
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.film-detail-media:hover .film-detail-media-plate::after,
+.film-detail-media:focus-within .film-detail-media-plate::after {
+  opacity: 1;
+  transform: translateX(60%);
+  transition:
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 140ms ease;
+}
+
+/* 银盐颗粒：极淡噪点压在图片上，去掉数码塑料感。 */
+.film-detail-media-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23grain)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  mix-blend-mode: overlay;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.film-detail-media-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: contrast(1.05) saturate(1.05);
+}
+
+/* 窄屏把投影收紧，避免竖向长页里压出过大的黑雾。 */
+@media (max-width: 900px) {
+  .film-detail-media {
+    box-shadow:
+      calc(var(--media-lift-x) * 0.6) calc(1.25rem + var(--media-lift-y) * 0.6)
+        2.25rem -0.625rem rgb(var(--media-shadow-rgb) / var(--media-shadow-a1)),
+      calc(var(--media-lift-x) * 0.35)
+        calc(0.75rem + var(--media-lift-y) * 0.35) 1.5rem -0.75rem
+        rgb(var(--media-shadow-rgb) / var(--media-shadow-a2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .film-detail-media {
+    transition: none;
+  }
+
+  .film-detail-media:hover .film-detail-media-plate::after,
+  .film-detail-media:focus-within .film-detail-media-plate::after {
+    opacity: 0;
+    transform: translateX(-60%);
+    transition: none;
+  }
+}
+
+/* The project tint is a low-opacity multiply pass over the illustration. */
+.film-detail-media-theme {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  mix-blend-mode: multiply;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.film-detail-media-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgb(17 17 17 / 0.18) 0%,
+    transparent 38%,
+    rgb(17 17 17 / 0.62) 100%
+  );
+  pointer-events: none;
+}
+
+.film-detail-index,
+.film-detail-stamp {
+  position: absolute;
+  z-index: 4;
+  font-family: var(--font-jetbrains-mono);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  /* These sit on the image, not on the light page, so they stay light. */
+  color: var(--on-media);
+  opacity: 0.65;
+}
+
+.film-detail-index {
+  top: clamp(1rem, 2vw, 1.5rem);
+  left: clamp(1rem, 2vw, 1.5rem);
+  font-size: 0.625rem;
+}
+
+.film-detail-stamp {
+  bottom: clamp(1rem, 2vw, 1.5rem);
+  left: clamp(1rem, 2vw, 1.5rem);
+  font-size: 0.625rem;
+}
+
+.film-detail-info {
+  position: relative;
+  z-index: 2;
+  order: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 34rem;
+  align-self: center;
+  /* Nudge the copy just above the media's optical center. */
+  transform: translateY(-2vh);
+}
+
+/* The title deliberately breaks out of the info column and crosses onto the
+   media. The body copy stays in the left column. */
+.film-detail-title {
+  position: relative;
+  z-index: 10;
+  width: max-content;
+  max-width: none;
+  margin: 1.8rem 0 0;
+  font-family:
+    var(--font-youshe), "YouSheBiaoTiHei", Impact, sans-serif;
+  font-weight: 400;
+  font-size: clamp(4.5rem, 8vw, 10rem);
+  text-rendering: geometricPrecision;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--paper);
+  text-shadow: 0 8px 32px rgb(0 0 0 / 0.18);
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* 2–3 characters: one line at maximum scale. The title starts close to the
+   page edge so the left column reads as one typographic block. */
+.film-detail-title.is-short {
+  margin-left: clamp(1.5rem, 4vw, 3.5rem);
+  max-width: none;
+  font-size: clamp(6rem, 12vw, 14rem);
+}
+
+/* 4+ characters: two staggered lines at a slightly smaller optical size. The
+   wider block still runs over the media edge without crossing the viewport. */
+.film-detail-title.is-long {
+  margin-left: clamp(1.5rem, 4vw, 3.5rem);
+  max-width: 120%;
+  font-size: clamp(4.5rem, 9vw, 11rem);
+  white-space: normal;
+}
+
+/* Title handoff: the real title waits behind this mask while the frame-title
+   clone travels in; the mask is open so the title can cross the media edge. */
+.film-detail-title-mask {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: visible;
+  padding-block: 0.06em;
+  margin-block: -0.06em;
+}
+
+.film-detail-title-inner,
+.film-detail-title-line {
+  display: block;
+}
+
+.film-detail-title-line.is-second {
+  padding-left: 0.5em;
+}
+
+/* The clone is positioned in fixed coordinates by JS; it only ever gets
+   transform + opacity tweens. */
+.film-detail-title-clone {
+  z-index: 10;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.film-detail-meta {
+  margin-top: 0.8rem;
+  font-family: var(--font-jetbrains-mono);
+  font-size: 0.625rem;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.film-detail-description {
+  max-width: 60ch;
+  margin-top: 1.2rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--paper);
+  opacity: 0.78;
+}
+
+.film-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+/* Experience link docks under the inspection image, not on the strip card.
+   Centered on the media's column so it reads as part of the still. */
+.film-detail-media-experience {
+  position: relative;
+  z-index: 5;
+  order: 3;
+  grid-column: 2;
+  display: flex;
+  justify-content: center;
+  margin-top: 1.1rem;
+}
+
+.film-detail-media-experience .frame-action {
+  min-height: 2.25rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.75rem;
+}
+
+.film-detail-actions .frame-action {
+  min-height: 2rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.6875rem;
+}
+
+.film-detail-actions .frame-action-secondary {
+  border-color: rgb(21 19 15 / 0.28);
+  color: var(--text-primary);
+}
+
+.film-detail-actions .frame-action-text {
+  color: var(--text-secondary);
+}
+
+/* Four-corner micro-information: close is the top-right corner. */
+.film-detail-corners {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.film-detail-corner {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper);
+  opacity: 0.4;
+}
+
+.film-detail-corner::before {
+  content: "";
+  width: 0.85rem;
+  height: 1px;
+  background-color: currentColor;
+  opacity: 0.55;
+}
+
+.film-detail-corner-tl {
+  top: clamp(1rem, 2.4vw, 2rem);
+  left: var(--page-gutter);
+}
+
+.film-detail-corner-bl {
+  bottom: clamp(1rem, 2.4vw, 2rem);
+  left: var(--page-gutter);
+}
+
+.film-detail-corner-br {
+  right: var(--page-gutter);
+  bottom: clamp(1rem, 2.4vw, 2rem);
+  font-family: var(--font-jetbrains-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+}
+
+.film-detail-info .film-kicker {
+  opacity: 0.45;
+  letter-spacing: 0.12em;
+}
+
+.film-detail-close {
+  position: fixed;
+  top: clamp(1rem, 3vw, 2rem);
+  right: clamp(1rem, 3vw, 2rem);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: none;
+  background-color: transparent;
+  overflow: hidden;
+  padding: 0.55rem 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.film-detail-close:focus-visible,
+.film-detail-actions .frame-action:focus-visible {
+  outline: 1px solid rgb(from var(--text-primary) r g b / 0.55);
+  outline-offset: 3px;
+}
+
+.film-detail-close:hover {
+  color: var(--accent);
+}
+
+.film-detail-close-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.film-detail-close-hint {
+  font-family: var(--font-jetbrains-mono);
+  font-size: 0.625rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  opacity: 0.75;
+}
+
+.film-detail-close-x {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .film-track {
+    /* 起点就交给 GSAP 的初始化（x: 0），这里只声明合成层。 */
+    will-change: transform;
+  }
+}
+
+/* 平板 / 手机：退回纵向卡片流，不接管触控手势，也不做 hover 放大。 */
+@media (max-width: 1023px) {
+  .film-runway {
+    height: auto;
+  }
+
+  .film-stage {
+    position: relative;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+    padding-block: 0;
+  }
+
+  .film-header {
+    position: relative;
+  }
+
+  /* 触屏不接管手势：退回原生横向滑动，再把静止的 rotateY 留在轨道上，
+     保留"左近右远"的观看角度，但没有任何逐帧 3D 计算。 */
+  .film-viewport {
+    display: block;
+    padding-block: 2rem 3rem;
+  }
+
+  .film-scroller {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-inline: max(1.5rem, 6vw);
+    perspective: 1100px;
+    perspective-origin: 0% 50%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scroll-snap-type: x proximity;
+  }
+
+  .film-track {
+    width: max-content;
+    flex-direction: row;
+    gap: 12px;
+    transform: rotateY(10deg);
+    transform-origin: left center;
+    will-change: auto;
+  }
+
+  .film-frame {
+    width: 74vw;
+    max-width: 380px;
+    scroll-snap-align: center;
+  }
+
+  /* 移动端没有 hover：操作按钮常驻在检片台，不在帧上浮现。 */
+  .frame-actions {
+    display: none;
+  }
+
+  .frame-copy {
+    max-width: calc(100% - 2.5rem);
+  }
+
+  .film-detail {
+    align-items: flex-start;
+    padding: 4.5rem 1rem 2rem;
+  }
+
+  .film-detail-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .film-detail-media,
+  .film-detail-info {
+    order: 0;
+  }
+
+  .film-detail-media-experience {
+    grid-column: 1;
+    order: 0;
+    margin-top: 0.25rem;
+  }
+
+  .film-detail-info {
+    max-width: none;
+    transform: none;
+  }
+
+  .film-detail-title {
+    width: max-content;
+    max-width: 100%;
+    margin: 1rem 0 0;
+    font-size: clamp(4.5rem, 12vw, 5.2rem);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .film-detail-title.is-short {
+    margin-left: 0;
+    max-width: 100%;
+    font-size: clamp(5rem, 16vw, 6.5rem);
+  }
+
+  .film-detail-title.is-long {
+    margin-left: 0;
+    max-width: 100%;
+    font-size: clamp(3.5rem, 14vw, 5rem);
+    white-space: normal;
+  }
+
+  .film-detail-title-mask {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .film-detail-corners {
+    display: none;
+  }
+
+  .film-detail-close {
+    top: 1rem;
+    right: 1rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .film-detail-actions .frame-action {
+    min-height: 2.75rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .film-detail-close-hint {
+    display: none;
+  }
+
+  .film-hint {
+    display: none;
+  }
+}
+
+/* 只有「桌面 + 允许动效」时才跑无限循环；其余情况（窄屏、reduced-motion）
+   隐藏补上去的三段复制帧，避免同一批项目出现三次。 */
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .film-frame[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* reduced-motion：普通纵向文档流，不做横向接管。 */
+@media (prefers-reduced-motion: reduce) {
+  .film-runway {
+    height: auto;
+  }
+
+  .film-stage {
+    position: relative;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding-block: 0;
+  }
+
+  .film-header {
+    position: relative;
+  }
+
+  .film-viewport {
+    display: block;
+    padding-block: 2.5rem 5rem;
+  }
+
+  .film-scroller {
+    padding-inline: max(1.5rem, 8vw);
+  }
+
+  .film-track {
+    width: 100%;
+    flex-direction: column;
+    gap: 2rem;
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .film-frame {
+    width: min(100%, 420px);
+    margin-inline: auto;
+  }
+
+  .frame-window {
+    transform: none !important;
+  }
+
+  .film-hint {
+    display: none;
+  }
+}
+
+/* reduced-motion 下仍可显影，但只保留 opacity 淡入：
+   不放大、不位移相邻帧、不压暗其余帧、不出现断口。 */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  .frame-image {
+    transition-duration: 200ms !important;
+  }
+
+  .frame-actions {
+    transform: none !important;
+    transition-property: opacity !important;
+    transition-duration: 200ms !important;
+  }
+
+  .frame-card:hover .frame-image,
+  .frame-card:focus-within .frame-image {
+    filter: grayscale(0%) contrast(1.1);
+  }
+
+  .frame-card:hover .frame-actions,
+  .frame-card:focus-within .frame-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Cinematic backdrop
+   A fixed, non-interactive camera-viewer layer behind the film strip.
+   -------------------------------------------------------------------------- */
+
+.cine-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--text-primary);
+  transition: opacity 300ms ease;
+}
+
+html.detail-open .cine-backdrop {
+  opacity: 0;
+}
+
+/* A huge, almost subliminal projector reel. It is clipped by the fixed
+   backdrop, never by the document, and cannot receive pointer input. */
+.cine-reel {
+  position: absolute;
+  right: -18vw;
+  bottom: -25vw;
+  z-index: 0;
+  width: 60vw;
+  max-width: 800px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  opacity: 0.12;
+  perspective: 1000px;
+  pointer-events: none;
+}
+
+.cine-reel-tilt,
+.cine-reel-spin {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+}
+
+.cine-reel-tilt {
+  transform: rotateX(25deg) rotateY(-15deg);
+  transform-style: preserve-3d;
+}
+
+.cine-reel-spin {
+  will-change: transform;
+}
+
+.cine-reel-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cine-timecode-stack {
+  position: absolute;
+  bottom: clamp(1.7rem, 3.8vh, 2.4rem);
+  left: var(--page-gutter);
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  line-height: 1;
+}
+
+.cine-timecode-label {
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  opacity: 0.45;
+}
+
+.cine-timecode {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  opacity: 0.35;
+  font-variant-numeric: tabular-nums;
+}
+
+.cine-timecode-field {
+  display: inline-block;
+  min-width: 2ch;
+  text-align: center;
+  will-change: transform, opacity;
+}
+
+.cine-timecode-field.is-millis {
+  min-width: 3ch;
+}
+
+.cine-timecode-sep {
+  display: inline-block;
+  opacity: 0.55;
+  padding-inline: 0.5px;
+}
+
+.cine-timecode.is-flashing {
+  animation: cine-timecode-flash 100ms ease-out;
+}
+
+@keyframes cine-timecode-flash {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.1;
+  }
+}
+
+.cine-reticle {
+  position: absolute;
+  inset: 0;
+  width: 200px;
+  height: 200px;
+  margin: auto;
+  border: 1px solid rgb(245 241 232 / 0.15);
+  opacity: 0.04;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.cine-reticle-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgb(245 241 232 / 0.15);
+  border-style: solid;
+}
+
+.cine-reticle-tl {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+
+.cine-reticle-tr {
+  top: -1px;
+  right: -1px;
+  border-width: 2px 2px 0 0;
+}
+
+.cine-reticle-bl {
+  bottom: -1px;
+  left: -1px;
+  border-width: 0 0 2px 2px;
+}
+
+.cine-reticle-br {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+.cine-reticle-cross {
+  position: absolute;
+  inset: 0;
+  width: 10px;
+  height: 10px;
+  margin: auto;
+}
+
+.cine-reticle-cross::before,
+.cine-reticle-cross::after {
+  position: absolute;
+  content: "";
+  background-color: rgb(245 241 232 / 0.15);
+}
+
+.cine-reticle-cross::before {
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 10px;
+}
+
+.cine-reticle-cross::after {
+  top: 50%;
+  left: 0;
+  width: 10px;
+  height: 1px;
+}
+
+/* 底部时间轴刻度尺：三道高度不同的刻线 + 顶边发丝线，
+   滚动时整体匀速左移，像磁带机在走带。只做背景纹理，不抢视线。 */
+.cine-ruler {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 22px;
+  overflow: hidden;
+  opacity: 0.5;
+  box-shadow: inset 0 1px 0 rgb(from var(--text-primary) r g b / 0.1);
+}
+
+.cine-ruler-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + 40px);
+  height: 100%;
+  background-image:
+    /* 40px 主刻度 */
+    linear-gradient(
+      90deg,
+      rgb(from var(--text-primary) r g b / 0.55) 0 1px,
+      transparent 1px 40px
+    ),
+    /* 20px 中刻度 */
+    linear-gradient(
+      90deg,
+      transparent 0 19px,
+      rgb(from var(--text-primary) r g b / 0.32) 19px 20px,
+      transparent 20px 40px
+    ),
+    /* 10px 细刻度 */
+    linear-gradient(
+      90deg,
+      transparent 0 9px,
+      rgb(from var(--text-primary) r g b / 0.18) 9px 10px,
+      transparent 10px 29px,
+      rgb(from var(--text-primary) r g b / 0.18) 29px 30px,
+      transparent 30px 40px
+    );
+  background-repeat: repeat-x;
+  background-position:
+    0 100%,
+    0 100%,
+    0 100%;
+  background-size:
+    40px 10px,
+    40px 6px,
+    40px 4px;
+  will-change: transform;
+}
+
+@media (max-width: 720px) {
+  .cine-ruler {
+    height: 18px;
+  }
+
+  .cine-ruler-track {
+    background-size:
+      40px 8px,
+      40px 5px,
+      40px 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cine-timecode.is-flashing {
+    animation: none;
+  }
+
+  .cine-timecode-field {
+    transform: none !important;
+  }
+
+  .cine-reticle {
+    opacity: 0.04 !important;
+    transform: none !important;
+  }
+
+  .cine-ruler-track {
+    transform: none !important;
+  }
+
+  .cine-reel-tilt {
+    transform: rotateX(25deg) rotateY(-15deg) !important;
+  }
+
+  .cine-reel-spin {
+    transform: none !important;
+  }
+
+  .cine-reel {
+    opacity: 0.12;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Site chrome / view switch
+   -------------------------------------------------------------------------- */
+
+html.skills-open {
+  color-scheme: light;
+}
+
+html.theme-is-animating,
+html.theme-is-animating body,
+html.theme-is-animating .site-nav,
+html.theme-is-animating .site-nav button,
+html.theme-is-animating .film-brand,
+html.theme-is-animating .film-header-meta,
+html.theme-is-animating .film-hint,
+html.theme-is-animating .film-kicker,
+html.theme-is-animating .frame-kicker,
+html.theme-is-animating .frame-title,
+html.theme-is-animating .frame-meta,
+html.theme-is-animating .frame-index,
+html.theme-is-animating .film-detail-title,
+html.theme-is-animating .film-detail-meta,
+html.theme-is-animating .film-detail-description,
+html.theme-is-animating .film-detail-corner {
+  transition: none !important;
+}
+
+.site-nav {
+  position: fixed;
+  top: clamp(1.25rem, 2.2vw, 1.75rem);
+  left: 50%;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  transform: translateX(-50%);
+  color: var(--text-secondary);
+  font-family: var(--font-geist-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition:
+    color 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+
+.site-nav button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  opacity: 0.52;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+
+.site-nav button:hover,
+.site-nav button[aria-current="page"] {
+  opacity: 1;
+}
+
+.site-nav button[aria-current="page"] {
+  color: var(--text-primary);
+}
+
+.site-nav-separator {
+  opacity: 0.28;
+}
+
+html.detail-open .site-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Skills / opening credits
+   -------------------------------------------------------------------------- */
+
+.skills-section {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% - var(--page-gutter) * 2), 800px);
+  min-height: 100svh;
+  margin-inline: auto;
+  padding-block: 15vh;
+}
+
+.skills-watermark {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-primary);
+  font-family: var(--font-youshe), Impact, sans-serif;
+  font-size: clamp(8rem, 24vw, 20rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.8;
+  opacity: 0.03;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.skills-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.skills-header {
+  margin-bottom: clamp(3rem, 8vh, 5rem);
+}
+
+.skills-eyebrow,
+.skills-list-label,
+.skills-act-title {
+  color: var(--text-secondary);
+  font-family: var(--font-geist-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.skills-eyebrow {
+  opacity: 0.62;
+}
+
+.skills-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--text-secondary) 32%, transparent);
+  color: var(--text-secondary);
+}
+
+.skills-list-label {
+  margin: 0;
+}
+
+.skills-toggle-all {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  opacity: 0.62;
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+
+.skills-toggle-all:hover,
+.skills-toggle-all:focus-visible {
+  opacity: 1;
+}
+
+.skills-list,
+.skills-act-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skills-act {
+  margin-top: clamp(3rem, 8vh, 5rem);
+}
+
+.skills-act:first-child {
+  margin-top: clamp(2.5rem, 6vh, 4rem);
+}
+
+.skills-act-title {
+  display: flex;
+  gap: 0.55rem;
+  margin: 0 0 0.45rem;
+  opacity: 0.68;
+}
+
+.skills-item {
+  padding: 0;
+}
+
+.skills-row {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  padding: 0.95rem 0 0.8rem;
+  opacity: 0.72;
+  transition: opacity 200ms ease;
+}
+
+.skills-item:hover .skills-row,
+.skills-item:focus-within .skills-row,
+.skills-list.is-expanded .skills-row {
+  opacity: 1;
+}
+
+.skills-item:hover .skills-category,
+.skills-item:focus-within .skills-category,
+.skills-list.is-expanded .skills-category {
+  opacity: 1;
+}
+
+.skills-item:focus-visible {
+  outline: 1px solid var(--text-secondary);
+  outline-offset: 4px;
+}
+
+.skills-category {
+  flex: none;
+  width: min(34%, 13.5rem);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.5;
+  transition: opacity 200ms ease;
+}
+
+.skills-rule {
+  flex: 1;
+  min-width: 1.5rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--text-primary) 28%, transparent);
+  opacity: 0.42;
+  transform: translateY(-0.35em);
+}
+
+.skills-name {
+  flex: none;
+  color: var(--text-primary);
+  font-family: var(--font-youshe), "YouSheBiaoTiHei", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.skills-note {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    max-height 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.skills-note p {
+  width: min(100%, 60ch);
+  margin: 0 0 0.9rem;
+  color: var(--text-secondary);
+  font-family: var(--font-geist-sans);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+.skills-item:hover .skills-note,
+.skills-item:focus-within .skills-note,
+.skills-list.is-expanded .skills-note {
+  max-height: 4rem;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.skills-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .site-nav {
+    top: 1rem;
+    gap: 0.55rem;
+    font-size: 9px;
+  }
+
+  .skills-section {
+    padding-block: 15vh;
+  }
+
+  .skills-row {
+    gap: 0.65rem;
+  }
+
+  .skills-category {
+    width: auto;
+    max-width: 42%;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+  }
+
+  .skills-name {
+    font-size: 17px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   About / end credits
+   -------------------------------------------------------------------------- */
+
+.about-section {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% - var(--page-gutter) * 2), 800px);
+  min-height: 100svh;
+  margin-inline: auto;
+  padding-block: 22vh 18vh;
+}
+
+.about-watermark {
+  position: fixed;
+  right: 4vw;
+  bottom: 6vh;
+  z-index: 0;
+  color: var(--text-primary);
+  font-family: var(--font-youshe), Impact, sans-serif;
+  font-size: clamp(9rem, 26vw, 22rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.8;
+  opacity: 0.03;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.about-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.about-header {
+  margin-bottom: clamp(3.5rem, 10vh, 6rem);
+}
+
+.about-eyebrow {
+  margin: 0 0 1.2rem;
+  color: var(--text-secondary);
+  font-family: var(--font-geist-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+
+.about-name {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-youshe), "YouSheBiaoTiHei", sans-serif;
+  font-size: clamp(3rem, 9vw, 5.25rem);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.about-role {
+  margin: 1.1rem 0 0;
+  color: var(--text-secondary);
+  font-family: var(--font-geist-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.about-notes {
+  max-width: 60ch;
+  margin-bottom: clamp(3.5rem, 10vh, 5.5rem);
+}
+
+.about-notes p {
+  margin: 0 0 1.6em;
+  color: rgb(245 241 232 / 0.85);
+  font-family: var(--font-geist-sans);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.8;
+}
+
+.about-credits {
+  margin: 0 0 clamp(3.5rem, 10vh, 5.5rem);
+  padding: 1.4rem 0;
+  border-top: 1px solid
+    color-mix(in srgb, var(--text-primary) 14%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--text-primary) 14%, transparent);
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+.about-credit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 0.42rem 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.about-credit-row dt {
+  flex: none;
+  width: 7.5rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.about-credit-row dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.about-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.6rem;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text-secondary);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.about-links span {
+  opacity: 0.4;
+}
+
+.about-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.about-links a:hover,
+.about-links a:focus-visible {
+  color: var(--text-primary);
+}
+
+.about-cta {
+  display: inline-block;
+  padding: 0.95rem 2.4rem;
+  border: 0;
+  background: #ff4d00;
+  color: #111111;
+  font-family: var(--font-geist-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    box-shadow 300ms ease,
+    filter 300ms ease;
+}
+
+.about-cta:hover,
+.about-cta:focus-visible {
+  box-shadow: 0 0 20px rgb(255 77 0 / 0.3);
+  filter: brightness(1.08);
+}
+
+.about-fin {
+  margin: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.about-ruler {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  height: 20px;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgb(from var(--text-primary) r g b / 0.55) 0 1px,
+      transparent 1px 40px
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0 19px,
+      rgb(from var(--text-primary) r g b / 0.3) 19px 20px,
+      transparent 20px 40px
+    );
+  background-repeat: repeat-x;
+  background-position:
+    0 100%,
+    0 100%;
+  background-size:
+    40px 8px,
+    40px 4px;
+}
+
+@media (max-width: 640px) {
+  .about-section {
+    padding-block: 18vh 14vh;
+  }
+
+  .about-credit-row {
+    gap: 1rem;
+    font-size: 10px;
+  }
+
+  .about-credit-row dt {
+    width: 5.5rem;
+  }
+}
+
+

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="pomodoro-title">
+  <title id="pomodoro-title">Quiet bright desk with a single orange timer ring</title>
+  <defs>
+    <linearGradient id="pomo-room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f2e9"/>
+      <stop offset="1" stop-color="#efe9dc"/>
+    </linearGradient>
+    <linearGradient id="pomo-desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6decc"/>
+      <stop offset="1" stop-color="#d8cdb6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#pomo-room)"/>
+  <!-- wall clock far corner for depth -->
+  <circle cx="1420" cy="180" r="70" fill="#ffffff" stroke="#111111" stroke-opacity=".14" stroke-width="5"/>
+  <line x1="1420" y1="180" x2="1420" y2="140" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <line x1="1420" y1="180" x2="1448" y2="196" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
+  <!-- giant timer ring, the only hero -->
+  <circle cx="760" cy="430" r="270" fill="#ffffff" stroke="#111111" stroke-opacity=".07" stroke-width="20"/>
+  <!-- orange progress arc: 25min minus ~4min elapsed -->
+  <path d="M760 160 A270 270 0 1 1 521 300" fill="none" stroke="#ff4d00" stroke-width="20" stroke-linecap="round"/>
+  <!-- readout -->
+  <text x="760" y="415" text-anchor="middle" font-family="monospace" font-size="104" font-weight="500" fill="#111111">21:34</text>
+  <text x="760" y="480" text-anchor="middle" font-family="monospace" font-size="22" letter-spacing="10" fill="#8c877d">专注 · FOCUS</text>
+  <!-- controls: outline buttons -->
+  <g font-family="monospace" font-size="20" letter-spacing="6" fill="#111111">
+    <rect x="600" y="560" width="150" height="56" fill="none" stroke="#111111" stroke-opacity=".7" stroke-width="2"/>
+    <text x="675" y="596" text-anchor="middle">开始</text>
+    <rect x="780" y="560" width="150" height="56" fill="none" stroke="#111111" stroke-opacity=".7" stroke-width="2"/>
+    <text x="855" y="596" text-anchor="middle">重置</text>
+  </g>
+  <!-- daily stat -->
+  <text x="760" y="700" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="4" fill="#8c877d">今日完成 3 个番茄钟</text>
+  <!-- small plant on desk edge -->
+  <g transform="translate(1240 640)">
+    <path d="M0 120h96l-10 60H10z" fill="#c9a06a"/>
+    <path d="M48 118C48 60 20 40 -8 30c10 44 26 76 56 88z" fill="#5f7d54"/>
+    <path d="M48 118c0-64 30-88 62-100-12 50-30 86-62 100z" fill="#72936a"/>
+    <rect x="6" y="176" width="84" height="8" fill="#111111" opacity=".06"/>
+  </g>
+  <!-- desk -->
+  <rect y="790" width="1600" height="110" fill="url(#pomo-desk)"/>
+</svg>

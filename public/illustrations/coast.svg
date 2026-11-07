@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="coast-title">
+  <title id="coast-title">Layered vector night coast with a pale moon and cliffs</title>
+  <defs>
+    <linearGradient id="coast-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#061423"/>
+      <stop offset=".55" stop-color="#0c3044"/>
+      <stop offset="1" stop-color="#d97161"/>
+    </linearGradient>
+    <linearGradient id="coast-sea" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071b2b"/>
+      <stop offset=".55" stop-color="#0c4150"/>
+      <stop offset="1" stop-color="#176374"/>
+    </linearGradient>
+    <radialGradient id="coast-moon" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fffbe8"/>
+      <stop offset=".5" stop-color="#ffe8b0"/>
+      <stop offset="1" stop-color="#ffd27a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="coast-cliff" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#152c32"/>
+      <stop offset="1" stop-color="#060c12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#coast-sky)"/>
+  <g fill="#cfe2d8">
+    <circle cx="180" cy="120" r="3"/>
+    <circle cx="330" cy="210" r="2"/>
+    <circle cx="520" cy="90" r="2.5"/>
+    <circle cx="760" cy="160" r="2"/>
+    <circle cx="980" cy="70" r="3"/>
+    <circle cx="1230" cy="160" r="2"/>
+    <circle cx="1410" cy="100" r="2.5"/>
+    <circle cx="1510" cy="230" r="2"/>
+    <circle cx="650" cy="250" r="1.8"/>
+    <circle cx="1110" cy="260" r="1.8"/>
+  </g>
+  <circle cx="1180" cy="250" r="210" fill="url(#coast-moon)" opacity=".55"/>
+  <circle cx="1180" cy="250" r="78" fill="#fff4d2"/>
+  <path d="M0 470 120 390l150 40 130-90 180 74 160-66 170 90 170-56 160 62 170-82 190 74v120H0z" fill="#124351" opacity=".8"/>
+  <path d="M0 540 190 450l190 60 180-100 220 90 190-50 210 80 230-100 190 80v110H0z" fill="#092b3a"/>
+  <rect y="580" width="1600" height="320" fill="url(#coast-sea)"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M-40 650c130-28 260-28 390 0s260 28 390 0 260-28 390 0 260 28 390 0 140 18 160 24" stroke="#4a9aa1" stroke-width="12" opacity=".42"/>
+    <path d="M-40 725c150-32 300-32 450 0s300 32 450 0 300-32 450 0 250 24 330 10" stroke="#f2b37f" stroke-width="7" opacity=".55"/>
+    <path d="M-40 805c170-28 340-28 510 0s340 28 510 0 340-28 510 0 120 12 140 14" stroke="#1a6270" stroke-width="22" opacity=".55"/>
+  </g>
+  <g fill="url(#coast-cliff)">
+    <path d="M0 450h240c-10 80-50 134-116 176L0 740z"/>
+    <path d="M1420 480c80 30 122 88 144 158l36 150v112h-260z" opacity=".95"/>
+    <path d="M0 900V730c92-52 182-50 260-4 64 38 92 96 118 174z"/>
+  </g>
+  <g fill="#071018">
+    <path d="M1050 520h20v120h-20z"/>
+    <path d="M1036 520h48l-14-54h-20z"/>
+    <rect x="1052" y="470" width="16" height="16" fill="#ffd27a"/>
+  </g>
+  <path d="M1020 560c-70 16-110 60-140 120 58-28 108-32 164-16 38 12 68 32 96 62-18-84-52-142-120-166z" fill="#f2b37f" opacity=".2"/>
+  <g fill="none" stroke="#09151b" stroke-width="9" stroke-linecap="round">
+    <path d="M360 190c20-18 40-18 60 0M480 150c18-16 36-16 54 0M610 220c16-14 32-14 48 0"/>
+  </g>
+</svg>
