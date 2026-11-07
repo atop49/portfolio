@@ -451,21 +451,6 @@ html.detail-open .timeline-nav {
     opacity 240ms ease;
 }
 
-/* 片基表面的塑料反光：一条 110° 的极细斜光扫过整格。
-   纯装饰层，不吃指针事件，也不跟 hover 一起动——底片本身的反射是静止的。 */
-.frame-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 7;
-  background: linear-gradient(
-    110deg,
-    transparent 30%,
-    rgb(255 255 255 / 0.04) 40%,
-    transparent 50%
-  );
-  pointer-events: none;
-}
 
 /* 齿孔带：24px 高的片基，比画幅亮一档（var(--card) = #1a1a1a）。
    孔洞用 luminance 蒙版真的打穿——透出来的是卡片背后的 #111，不是画上去的方块。
