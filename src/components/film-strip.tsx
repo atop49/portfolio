@@ -1171,7 +1171,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
     if (!selected || !media || !plate) return;
     if (prefersReducedMotion()) return;
 
-    const MAX_TILT = 12;
+    const MAX_TILT = 5;
     const glare = plate.querySelector<HTMLElement>(".media-glare");
 
     let rotateX: ((value: number) => void) | null = null;
@@ -1229,8 +1229,8 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       rotateY?.(nx * MAX_TILT * 2);
       rotateX?.(-ny * MAX_TILT * 2);
       // 投影朝指针的反方向让开，倾斜越狠让得越多。
-      liftX?.(nx * -40);
-      liftY?.(ny * -24);
+      liftX?.(nx * -18);
+      liftY?.(ny * -10);
       if (glare) {
         glare.style.setProperty("--glare-x", `${(px * 100).toFixed(2)}%`);
         glare.style.setProperty("--glare-y", `${(py * 100).toFixed(2)}%`);
@@ -1245,7 +1245,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
     const onPointerEnter = () => {
       gsap.killTweensOf(plate);
       buildSetters();
-      scale?.(1.02);
+      scale?.(1.01);
       if (glare) gsap.to(glare, { opacity: 1, duration: 0.35, ease: "power2.out" });
     };
 
@@ -1262,8 +1262,8 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         rotationX: 0,
         rotationY: 0,
         scale: 1,
-        duration: 1.2,
-        ease: "elastic.out(1, 0.3)",
+        duration: 0.6,
+        ease: "elastic.out(1, 0.5)",
       });
       liftX?.(0);
       liftY?.(0);

@@ -1209,18 +1209,20 @@ html.detail-open .timeline-nav {
   flex: none;
   width: 100%;
   aspect-ratio: 16 / 9;
-  /* 纸面自己在倾斜，所以边框和裁切都交给 plate；
-     容器只负责透视、投影和网格定位。 */
+  /* 纸面自己在倾斜，所以裁切交给 plate；容器只负责透视、投影和网格定位。
+     这一层必须完全透明——3D 舞台一旦带底色，卡面一转就会露出割裂的断层。 */
   border-radius: 4px;
-  background-color: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: visible;
   perspective: 1200px;
   --media-lift-x: 0px;
   --media-lift-y: 0px;
+  /* 收敛后的实体投影：一块 1.25rem 落差的亚克力板，
+     外加一道 1px 描边把白卡和浅色台面分开。 */
   box-shadow:
-    var(--media-lift-x) calc(1.875rem + var(--media-lift-y)) 3.75rem -0.75rem
-      rgb(var(--media-shadow-rgb) / var(--media-shadow-a1)),
-    calc(var(--media-lift-x) * 0.6) calc(1.125rem + var(--media-lift-y) * 0.6)
-      2.25rem -1.125rem rgb(var(--media-shadow-rgb) / var(--media-shadow-a2));
+    calc(var(--media-lift-x) * 0.5) calc(1.25rem + var(--media-lift-y) * 0.5) 3.125rem
+      -0.5rem rgb(var(--media-shadow-rgb) / 0.1);
   transform-origin: 50% 50%;
   transition: box-shadow 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1230,11 +1232,19 @@ html.detail-open .timeline-nav {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border: 1px solid rgb(from var(--text-primary) r g b / 0.12);
+  /* 纯色底：图片万一有透明像素，也不会透出底下的文字层。
+     边框不在这里画（真 border 会把内容内缩 1px，倾斜时露出一圈亮边），
+     改用 ::before 的内阴影 + 外层的 1px 投影做分界。 */
+  border: 0;
+  background-color: #ffffff;
   border-radius: 4px;
+  backface-visibility: hidden;
   transform-style: preserve-3d;
   transform-origin: 50% 50%;
   will-change: transform;
+  /* 描边画在会旋转的板上，而不是外层容器——否则卡片一转，
+     固定的 1px 方框就和卡边错位，看起来像一圈灰边。 */
+  box-shadow: 0 0 0 1px rgb(from var(--text-primary) r g b / 0.16);
 }
 
 /* 内侧压边：图片边缘不再刺眼，向纸面里沉一点点。 */
@@ -1246,8 +1256,9 @@ html.detail-open .timeline-nav {
   border-radius: inherit;
   box-shadow:
     inset 0 0 1.25rem rgb(0 0 0 / 0.05),
-    inset 0 0 0 1px rgb(0 0 0 / 0.06);
+    inset 0 0 0 1px rgb(0 0 0 / 0.12);
   pointer-events: none;
+  transform: translateZ(5px);
 }
 
 /* 径向反光：一团跟着指针跑的高光，圆心由 --glare-x / --glare-y 控制。
@@ -1265,6 +1276,7 @@ html.detail-open .timeline-nav {
   opacity: 0;
   pointer-events: none;
   border-radius: inherit;
+  transform: translateZ(4px);
 }
 
 
@@ -1278,6 +1290,7 @@ html.detail-open .timeline-nav {
   mix-blend-mode: overlay;
   opacity: 0.15;
   pointer-events: none;
+  transform: translateZ(3px);
 }
 
 .film-detail-media-img {
@@ -1294,11 +1307,8 @@ html.detail-open .timeline-nav {
 @media (max-width: 900px) {
   .film-detail-media {
     box-shadow:
-      calc(var(--media-lift-x) * 0.6) calc(1.25rem + var(--media-lift-y) * 0.6)
-        2.25rem -0.625rem rgb(var(--media-shadow-rgb) / var(--media-shadow-a1)),
-      calc(var(--media-lift-x) * 0.35)
-        calc(0.75rem + var(--media-lift-y) * 0.35) 1.5rem -0.75rem
-        rgb(var(--media-shadow-rgb) / var(--media-shadow-a2));
+      calc(var(--media-lift-x) * 0.3) calc(0.875rem + var(--media-lift-y) * 0.3) 2rem
+        -0.5rem rgb(var(--media-shadow-rgb) / 0.1);
   }
 }
 
@@ -1321,6 +1331,7 @@ html.detail-open .timeline-nav {
   mix-blend-mode: multiply;
   opacity: 0.15;
   pointer-events: none;
+  transform: translateZ(1px);
 }
 
 .film-detail-media-scrim {
