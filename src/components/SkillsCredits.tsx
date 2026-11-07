@@ -154,7 +154,6 @@ export default function SkillsCredits() {
 
       <div className="skills-inner">
         <header className="skills-header">
-          <p className="skills-eyebrow">Opening credits</p>
           <h1 id="skills-title" className="skills-sr-only">
             技能
           </h1>

@@ -153,7 +153,6 @@ export default function AboutTitlePage() {
 
       <div className="about-inner">
         <header className="about-header" data-about-reveal>
-          <p className="about-eyebrow">End credits</p>
           <h1 id="about-title" className="about-name">
             王骐
           </h1>

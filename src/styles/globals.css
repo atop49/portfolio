@@ -2089,7 +2089,6 @@ html.detail-open .site-nav {
   margin-bottom: clamp(3rem, 8vh, 5rem);
 }
 
-.skills-eyebrow,
 .skills-list-label,
 .skills-act-title {
   color: var(--text-secondary);
@@ -2099,10 +2098,6 @@ html.detail-open .site-nav {
   letter-spacing: 0.18em;
   line-height: 1.2;
   text-transform: uppercase;
-}
-
-.skills-eyebrow {
-  opacity: 0.62;
 }
 
 .skills-list-head {
@@ -2346,18 +2341,6 @@ html.detail-open .site-nav {
 
 .about-header {
   margin-bottom: clamp(3.5rem, 10vh, 6rem);
-}
-
-.about-eyebrow {
-  margin: 0 0 1.2rem;
-  color: var(--text-secondary);
-  font-family: var(--font-geist-sans);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  line-height: 1.2;
-  text-transform: uppercase;
-  opacity: 0.62;
 }
 
 .about-name {
