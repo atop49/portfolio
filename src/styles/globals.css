@@ -125,6 +125,126 @@ html.detail-open .film-hint {
 }
 
 /* --------------------------------------------------------------------------
+   TimelineNavigator：底部中央的胶片刻度尺
+   索引 · 选区框 · 总帧数 · 刻度阵列。1px 的线，4px 的间距，
+   鼠标滑过时那一根从 8px 长到 14px 并亮到纯白，当前帧则常亮并带一个橙色点。
+   -------------------------------------------------------------------------- */
+.timeline-nav {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(4.7rem, 9vh, 6.2rem);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  transform: translateX(-50%);
+  opacity: 0.8;
+  transition: opacity 220ms ease;
+}
+
+.timeline-nav:hover,
+.timeline-nav:focus-within {
+  opacity: 1;
+}
+
+.timeline-nav-index,
+.timeline-nav-total {
+  font-family: var(--font-jetbrains-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.timeline-nav-index {
+  opacity: 0.92;
+}
+
+.timeline-nav-total {
+  opacity: 0.4;
+}
+
+/* 选区框：只画 1px 的边，里面永远是空的。 */
+.timeline-nav-frame {
+  display: block;
+  width: 22px;
+  height: 11px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 30%, transparent);
+}
+
+.timeline-nav-ticks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 0.15rem;
+}
+
+/* 按钮本体是 5×24 的可点区域，那根 1px 的线由 ::before 画——
+   视觉上极细，手感上不至于点不中。 */
+.timeline-nav-tick {
+  position: relative;
+  width: 5px;
+  height: 24px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.timeline-nav-tick::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 8px;
+  background-color: rgb(245 241 232 / 0.2);
+  transform: translate(-50%, -50%);
+  transition:
+    height 200ms ease,
+    background-color 200ms ease;
+}
+
+.timeline-nav-tick:hover::before,
+.timeline-nav-tick:focus-visible::before {
+  height: 14px;
+  background-color: #f5f1e8;
+}
+
+.timeline-nav-tick.is-active::before {
+  height: 14px;
+  background-color: #f5f1e8;
+}
+
+/* 当前帧：线下面再压一个 2px 的信号橙点。 */
+.timeline-nav-tick.is-active::after {
+  content: "";
+  position: absolute;
+  top: calc(50% + 11px);
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  transform: translateX(-50%);
+}
+
+/* 触屏与减弱动效下没有滚轮轨道可跳，整条尺子不出现。 */
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .timeline-nav {
+    display: none;
+  }
+}
+
+html.detail-open .timeline-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
    项目胶片条
    使用全局类名而非 CSS Modules：本项目的 Turbopack 规则把 *.css 交给
    Tailwind 处理，CSS Modules 的映射会失效。

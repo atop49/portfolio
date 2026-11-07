@@ -8,6 +8,7 @@ import { Flip } from "gsap/Flip";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import FrameCard, { type Project } from "./frame-card";
 import ExploreTrigger from "./explore-trigger";
+import TimelineNavigator from "./timeline-navigator";
 import { splitDisplayTitle } from "@/lib/display-title";
 
 const PROJECTS: Project[] = [
@@ -218,6 +219,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
   const motionControlRef = useRef<{
     pause: () => void;
     resume: () => void;
+    navigate: (index: number) => void;
   } | null>(null);
   const openTlRef = useRef<gsap.core.Timeline | null>(null);
   const closeTlRef = useRef<gsap.core.Timeline | null>(null);
@@ -225,6 +227,9 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
   const closingRef = useRef(false);
 
   const [selected, setSelected] = useState<Project | null>(null);
+  /** 底部刻度尺的当前帧（0 起，对应 PROJECTS 下标）。 */
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef = useRef(0);
 
   const clearFlightTitle = useCallback(() => {
     titleCloneRef.current?.remove();
@@ -341,6 +346,16 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
             .querySelector(".frame-card")
             ?.classList.toggle("is-lead", i === leadIndex);
         }
+
+        // 焦点帧换算成第几个项目，喂给底部刻度尺。
+        // 只在真的换帧时 setState，免得每帧都触发一次 React 渲染。
+        if (leadIndex >= 0) {
+          const projectIndex = leadIndex % PROJECTS.length;
+          if (projectIndex !== activeIndexRef.current) {
+            activeIndexRef.current = projectIndex;
+            setActiveIndex(projectIndex);
+          }
+        }
       };
 
       const onWheel = (event: WheelEvent) => {
@@ -409,6 +424,32 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       };
       gsap.ticker.add(tick);
 
+      /**
+       * 刻度导航：把第 index 个项目送到"灯柱"（视口 34%）位置。
+       * 三段副本里挑离焦点最近的那一份，算出它要补的位移；
+       * 直接把结果写进 targetX，让既有的阻尼循环去完成缓动——
+       * 不必另起一条 tween，也不会打乱 x 的复位区间。
+       */
+      const navigateTo = (index: number) => {
+        const total = PROJECTS.length;
+        const target = ((index % total) + total) % total;
+        const focus = viewport.clientWidth * 0.34;
+        let bestCenter = 0;
+        let bestDistance = Infinity;
+        for (let copy = 0; copy < LOOP_COPIES; copy += 1) {
+          const i = copy * total + target;
+          if (i >= frameCenters.length) continue;
+          const screen = frameCenters[i] + x;
+          const distance = Math.abs(screen - focus);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestCenter = screen;
+          }
+        }
+        targetX = x + (focus - bestCenter);
+        targetRy = BASE_RY;
+      };
+
       motionControlRef.current = {
         pause: () => {
           paused = true;
@@ -416,6 +457,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         resume: () => {
           paused = false;
         },
+        navigate: navigateTo,
       };
 
       const refresh = () => {
@@ -1401,6 +1443,12 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
             </ul>
           </div>
         </div>
+
+        <TimelineNavigator
+          total={PROJECTS.length}
+          active={activeIndex}
+          onNavigate={(index) => motionControlRef.current?.navigate(index)}
+        />
 
         <p className="film-hint" aria-hidden="true">
           <span className="film-hint-inner" ref={hintRef}>
