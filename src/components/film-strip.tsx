@@ -288,7 +288,8 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
          每一格的角度/纵深/缩放都由"它离屏幕中轴多远"算出来——
          正中那格正面朝人，两侧 ±45° 向内转、后退 200px、缩到 0.8。
          轨道内容复制三段，滑出一整段就瞬间平移回来，所以永远滑不到头。 */
-      const WHEEL_SPEED = 0.9;
+      /* 鼠标滚一格 deltaY≈100，累计满 100 就换一张卡（一格一卡，不漂移）。 */
+      const WHEEL_THRESHOLD = 100;
       const DAMPING = 0.12;
       const MAX_ANGLE = 45;
       const MAX_DEPTH = 200;
@@ -398,6 +399,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         }
       };
 
+      let wheelAcc = 0;
       const onWheel = (event: WheelEvent) => {
         if (paused || event.ctrlKey) return;
         event.preventDefault();
@@ -409,7 +411,17 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
               : 1;
         const delta = event.deltaY * unit;
         // 向下滚（deltaY > 0）→ 轨道 x 变小 → 卡片整体向左转。
-        targetX -= delta * WHEEL_SPEED;
+        // 一格一卡：累积到阈值就整格推进，慢速滚也不会卡在两帧之间。
+        wheelAcc += delta;
+        const step = pitch > 0 ? pitch : viewport.clientWidth;
+        let jumps = 0;
+        while (Math.abs(wheelAcc) >= WHEEL_THRESHOLD && jumps < 2) {
+          const direction = wheelAcc > 0 ? 1 : -1;
+          targetX -= direction * step;
+          wheelAcc -= direction * WHEEL_THRESHOLD;
+          jumps += 1;
+        }
+        if (jumps === 2) wheelAcc = 0;
         lastInputAt = performance.now();
       };
       viewport.addEventListener("wheel", onWheel, { passive: false });
@@ -1679,3 +1691,4 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
     </section>
   );
 }
+ 

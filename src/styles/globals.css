@@ -447,9 +447,7 @@ html.detail-open .timeline-nav {
       calc(80px * (1 - var(--depth-dim) * 0.5))
       rgb(0 0 0 / calc(0.8 - var(--depth-dim) * 0.55)),
     0 0 0 1px rgb(255 255 255 / 0.05);
-  transition:
-    transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    box-shadow 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: box-shadow 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 
@@ -973,19 +971,12 @@ html.detail-open .timeline-nav {
   .frame-card:hover,
   .frame-card:has(.frame-hit:focus-visible),
   .frame-card.is-just-closed {
-    /* 只抬 3%、上移 4px、再抽高 40px：像一只手把这一格从片带里捏起来，
-       放大太多就又变回"网页卡片 hover 变大的套路"。 */
-    transform: scale(1.02) translateZ(50px);
+    /* 这里不再做任何位移/缩放：旋转木马的角度由 JS 每帧写入，
+       hover 再抬一手会把左右邻帧的边缘盖掉一截（看起来像被切断）。
+       显影只靠下面的 filter 与投影换挡。 */
     box-shadow:
       0 6px 14px rgb(0 0 0 / 0.6),
       0 20px 44px rgb(0 0 0 / 0.8);
-  }
-
-  /* 抬起来的那一格必须压在邻帧之上，否则放大的边会被右边的帧盖住。 */
-  .film-frame:has(.frame-card:hover),
-  .film-frame:has(.frame-card:has(.frame-hit:focus-visible)),
-  .film-frame:has(.frame-card.is-just-closed) {
-    z-index: 3;
   }
 
   .frame-card:hover .frame-window::before,
