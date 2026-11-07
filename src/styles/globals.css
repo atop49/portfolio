@@ -1883,9 +1883,6 @@ html.detail-open .cine-backdrop {
 /* A huge, almost subliminal projector reel. It is clipped by the fixed
    backdrop, never by the document, and cannot receive pointer input. */
 .cine-reel {
-  /* 已按需求停用：背景保持纯黑，不再有右下角那团模糊光晕。
-     组件与补间保留在 CinematicBackdrop 里，日后想恢复删掉这行即可。 */
-  display: none;
   position: absolute;
   right: -18vw;
   bottom: -25vw;
@@ -1894,7 +1891,8 @@ html.detail-open .cine-backdrop {
   max-width: 800px;
   aspect-ratio: 1;
   overflow: hidden;
-  opacity: 0.12;
+  /* 背景改成纯黑后，同样的 12% 会比原来更暗，抬到 18% 找回原来的存在感。 */
+  opacity: 0.18;
   perspective: 1000px;
   pointer-events: none;
 }
