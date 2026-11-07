@@ -170,7 +170,6 @@ export default function FrameCard({
         </span>
 
         <div className="frame-copy">
-          <p className="frame-kicker">{project.kicker}</p>
           <h2 className="frame-title">
             {titleLines.map((line, index) => (
               <span
@@ -183,7 +182,6 @@ export default function FrameCard({
               </span>
             ))}
           </h2>
-          <p className="frame-meta">{project.meta}</p>
         </div>
 
         <div className="frame-actions" role="group" aria-label="项目操作">

@@ -180,6 +180,56 @@ html.detail-open .film-hint {
   opacity: 1;
 }
 
+/* 左缘铭文：像胶片边缘的厂标，竖着贴在画面最左边。
+   它只说明"这是一卷精选作品"，不承载任何单帧信息——
+   所以永远压在片带之上、不随滚动移动，也绝不和卡片挤在一起。 */
+.film-rail {
+  position: fixed;
+  top: 15%;
+  left: clamp(1.1rem, 2.2vw, 2.1rem);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: var(--text-primary);
+  pointer-events: none;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.film-rail-label {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.film-rail-rule {
+  width: 1px;
+  height: 3.25rem;
+  background-color: currentColor;
+  opacity: 0.22;
+}
+
+.film-rail-meta {
+  font-family: var(--font-jetbrains-mono);
+  font-size: 0.5625rem;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1023px) {
+  .film-rail {
+    display: none;
+  }
+}
+
 .film-viewport {
   position: relative;
   display: flex;
@@ -195,26 +245,29 @@ html.detail-open .film-hint {
   min-width: 0;
   /* 暗房里的透视：视点压在画面左侧，整条底片朝右后方退。
      于是左端卡片离镜头最近（最大、最清晰），右端一直缩进深处。 */
-  perspective: 1200px;
-  perspective-origin: 0% 50%;
+  /* 1000px 会把 25° 的远端压缩得太狠，主帧反而显小；
+     1300px 保留同样的纵深，但近端能真正撑开。 */
+  perspective: 1000px;
+  perspective-origin: 10% 50%;
   /* mask 只作用于元素自身的盒子，投影长在盒子外就会被一起裁掉。
      上下各撑 6rem 再用负 margin 抵消，盒子够高、版面位置不变。 */
   padding-block: 6rem;
   margin-block: -6rem;
   /* 胶片不是从屏幕边缘被"切"出来的：左右各留一段渐隐，
-     让片带朝画面外继续延伸，顺带压掉视口硬的切割线。 */
+     让片带朝画面外继续延伸，顺带压掉视口硬的切割线。
+     左侧留 15% 是因为透视点（10%）就在那边——不能被硬切。 */
   -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    #000 clamp(1.5rem, 5vw, 5rem),
-    #000 calc(100% - clamp(1.5rem, 5vw, 5rem)),
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 85%,
     transparent 100%
   );
   mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    #000 clamp(1.5rem, 5vw, 5rem),
-    #000 calc(100% - clamp(1.5rem, 5vw, 5rem)),
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 85%,
     transparent 100%
   );
 }
@@ -227,8 +280,9 @@ html.detail-open .film-hint {
      缝里透的是页面底色，不是片基色——切片感来自这个"断开"。 */
   gap: 12px;
   margin: 0;
-  padding: 0;
   list-style: none;
+  /* start pad: clear of the 15% left fade so the lead frame is whole. */
+  padding: 0 0 0 12vw;
   background-color: transparent;
   /* 3D 上下文交给 GSAP 写入的 rotateX/rotateY；卡片靠 translateZ 从带子里抽出来。
      镜头在左侧，所以旋转轴钉在轨道左端——否则 33 帧（≈1.4 万 px）绕自身中心
@@ -239,7 +293,9 @@ html.detail-open .film-hint {
 
 .film-frame {
   flex: none;
-  width: clamp(360px, 28vw, 420px);
+  /* 一帧就是一块真正的画格：够大，才撑得住 25° 的侧透视。 */
+  /* 45vw is the ruler; the cap goes to 880px so a 2560-wide screen still gets a huge lead frame. */
+  width: clamp(500px, 45vw, 880px);
   /* 让 .frame-card 的 translateZ 参与同一条透视，而不是被拍平。 */
   transform-style: preserve-3d;
   transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -256,15 +312,21 @@ html.detail-open .film-hint {
   overflow: hidden;
   border: 0;
   border-radius: 0;
-  background-color: var(--ink);
+  /* 纯黑片基：齿孔是靠 luminance 蒙版真打穿的，透出来的是这一层，
+     所以它必须比页面底色更黑，孔才像"洞"而不是"印上去的方块"。 */
+  background-color: #000;
   isolation: isolate;
   perspective: 1100px;
   perspective-origin: 50% 50%;
   transform-origin: 50% 50%;
   /* 一格底片压在黑底上：贴地的一层暗影让它浮起来。 */
-  box-shadow: 0 12px 30px rgb(0 0 0 / 0.7);
+  /* 纯黑背景吞掉一切投影，所以再补一道 1px 的冷光轮廓，
+     让每格底片在暗处仍然有边。 */
+  box-shadow:
+    0 12px 30px rgb(0 0 0 / 0.7),
+    0 0 0 1px rgb(255 255 255 / 0.05);
   transition:
-    transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
     box-shadow 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
     opacity 240ms ease;
 }
@@ -344,7 +406,7 @@ html.detail-open .film-hint {
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background-color: var(--ink);
+  background-color: #000;
   /* 画幅比片基低一层：一圈内发丝线 + 内投影。
      顶边那道 0.06 的白线是片基切口的厚度反光，画面因此"陷"在两条孔带之间。 */
   box-shadow:
@@ -392,7 +454,19 @@ html.detail-open .film-hint {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-color: var(--ink);
+  background-color: #000;
+}
+
+/* 压暗层：白底的测试图直接铺进来会刺眼，先盖一层 40% 的黑做乘法。
+   叠在图片之上、遮罩之下，所以它在亮部吃掉的最多，暗部几乎不动。 */
+.frame-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(10, 10, 10, 0.4);
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 
 .frame-image {
@@ -404,8 +478,8 @@ html.detail-open .film-hint {
   object-fit: cover;
   object-position: center;
   /* 默认是一张高反差的直印黑白：压暗、提对比、彻底去色。
-     数码感来自"灰蒙蒙的中灰"，所以亮度压到 0.75，让黑真正落下去。 */
-  filter: grayscale(100%) contrast(1.3) brightness(0.75);
+     数码感来自"灰蒙蒙的中灰"，所以亮度压到 0.6，让黑真正落下去。 */
+  filter: grayscale(100%) contrast(1.5) brightness(0.6);
   /* 只过渡 filter——不加 opacity/transform 一起动，显影才不会闪。 */
   transition: filter 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
@@ -477,10 +551,15 @@ html.detail-open .film-hint {
   font-family:
     var(--font-youshe), "YouSheBiaoTiHei", Impact, sans-serif;
   font-size: clamp(1.75rem, 2.4vw, 2.4rem);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.05;
   letter-spacing: 0.02em;
-  color: var(--paper);
+  /* 纯白 + 一层同色微光：显示字体只有一个字重，靠这层描边把笔画撑厚，
+     项目名才不会陷进背后的亮部截图里。 */
+  color: #fff;
+  text-shadow:
+    0 0 1px rgb(255 255 255 / 0.6),
+    0 2px 20px rgb(0 0 0 / 0.9);
 }
 
 .frame-title-line {
@@ -809,11 +888,12 @@ html.detail-open .film-hint {
     transform: translateX(55%) skewX(-8deg);
   }
 
-  /* 显影：黑白直印在 300ms 里彻底转成彩色，亮度同时回到 1.0。 */
+  /* 显影：黑白直印在 300ms 里转回彩色，亮度也抬一档——
+     但比直印高一点点而已，否则从"黑片"跳成"网页图片"。 */
   .frame-card:hover .frame-image,
   .frame-card:has(.frame-hit:focus-visible) .frame-image,
   .frame-card.is-just-closed .frame-image {
-    filter: grayscale(0%) contrast(1.1);
+    filter: grayscale(0%) contrast(1.15) brightness(0.8);
   }
 
   .frame-card:hover .frame-actions,
@@ -864,6 +944,15 @@ html.detail-open .film-hint {
   .frame-card.is-deep:not(:hover):not(:has(.frame-hit:focus-visible)) {
     filter: blur(1px);
     opacity: 0.6;
+  }
+
+  /* 焦点帧：最靠左、离镜头最近的那一格要有一块"山"的重量，
+     投影压到 0.9 才镇得住纯黑背景。 */
+  .frame-card.is-lead:not(:hover):not(:has(.frame-hit:focus-visible)) {
+    box-shadow:
+      0 30px 60px rgb(0 0 0 / 0.9),
+      0 10px 20px rgb(0 0 0 / 0.75),
+      0 0 0 1px rgb(255 255 255 / 0.07);
   }
 }
 
@@ -1481,6 +1570,8 @@ html.detail-open .film-hint {
     width: max-content;
     flex-direction: row;
     gap: 12px;
+    /* 移动端是原生横向滚动：起点留白交给 .film-scroller 的 padding。 */
+    padding: 0;
     transform: rotateY(10deg);
     transform-origin: left center;
     will-change: auto;
@@ -1619,6 +1710,7 @@ html.detail-open .film-hint {
     width: 100%;
     flex-direction: column;
     gap: 2rem;
+    padding: 0;
     transform: none !important;
     will-change: auto;
   }
@@ -1673,6 +1765,8 @@ html.detail-open .film-hint {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  /* 纯黑底：片带齿孔是打穿的，孔里必须是真正的黑，不能是带蓝灰的 #111。 */
+  background-color: #000;
   color: var(--text-primary);
   transition: opacity 300ms ease;
 }
@@ -1684,6 +1778,9 @@ html.detail-open .cine-backdrop {
 /* A huge, almost subliminal projector reel. It is clipped by the fixed
    backdrop, never by the document, and cannot receive pointer input. */
 .cine-reel {
+  /* 已按需求停用：背景保持纯黑，不再有右下角那团模糊光晕。
+     组件与补间保留在 CinematicBackdrop 里，日后想恢复删掉这行即可。 */
+  display: none;
   position: absolute;
   right: -18vw;
   bottom: -25vw;

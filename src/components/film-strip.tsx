@@ -277,7 +277,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       /* 滚轮直接驱动胶片向左（页面本身不再滚动），阻尼靠每帧插值。
          位移一旦越过一整段的宽度，就把轨道瞬间右移一段——三段内容逐像素
          相同，所以这次复位在眼里是不存在的，胶片因此永远滑不到头。 */
-      const BASE_RY = 15;
+      const BASE_RY = 25;
       const BASE_RX = 5;
       const ROLL = 4;
       const WHEEL_SPEED = 0.9;
@@ -295,6 +295,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         track.querySelectorAll<HTMLElement>(".film-frame"),
       );
       let frameCenters: number[] = [];
+      let frameWidths: number[] = [];
       let measuredWidth = -1;
 
       const measure = () => {
@@ -309,6 +310,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         frameCenters = frames.map(
           (frame) => frame.offsetLeft + frame.offsetWidth / 2,
         );
+        frameWidths = frames.map((frame) => frame.offsetWidth);
         measuredWidth = viewport.clientWidth;
       };
       measure();
@@ -318,9 +320,26 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
 
       const applyDepth = () => {
         if (measuredWidth !== viewport.clientWidth) measure();
-        const horizon = viewport.clientWidth * 0.62;
+        const vw = viewport.clientWidth;
+        const horizon = vw * 0.62;
+        // 焦点帧：离视口左侧 22% 那条"灯柱"最近的那一格。
+        // 它离镜头最近、被透视放到最大，所以由它来扛那块 0.9 的投影。
+        let leadIndex = -1;
+        let leadDistance = Infinity;
         for (let i = 0; i < frames.length; i += 1) {
-          frames[i].classList.toggle("is-deep", frameCenters[i] + x > horizon);
+          const center = frameCenters[i] + x;
+          frames[i].classList.toggle("is-deep", center > horizon);
+          if (center < -frameWidths[i] * 0.5 || center > vw) continue;
+          const distance = Math.abs(center - vw * 0.34);
+          if (distance < leadDistance) {
+            leadDistance = distance;
+            leadIndex = i;
+          }
+        }
+        for (let i = 0; i < frames.length; i += 1) {
+          frames[i]
+            .querySelector(".frame-card")
+            ?.classList.toggle("is-lead", i === leadIndex);
         }
       };
 
@@ -1351,6 +1370,16 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
           <span className="film-brand">Portfolio</span>
           <span className="film-header-meta">11 frames · 2026</span>
         </header>
+
+        {/* 左缘铭文：竖排贴在画面最左侧，像胶片边缘的厂标。
+            它说明"这是一卷精选作品"，不跟任何一帧绑定，因此不会和卡片文字打架。 */}
+        <div className="film-rail" aria-hidden="true">
+          <span className="film-rail-label">Selected Works</span>
+          <span className="film-rail-rule" />
+          <span className="film-rail-meta">
+            Vol. 01 · 2026
+          </span>
+        </div>
 
         <div ref={viewportRef} className="film-viewport">
           <div className="film-scroller">
