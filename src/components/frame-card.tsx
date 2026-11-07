@@ -28,6 +28,7 @@ export type Project = {
   longDescription?: Dossier["longDescription"];
   techStack?: Dossier["techStack"];
   process?: Dossier["process"];
+  changelog?: Dossier["changelog"];
 };
 
 type FrameCardProps = {

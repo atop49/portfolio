@@ -1718,6 +1718,27 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
                   </ol>
                 </section>
 
+                <section className="dossier-block">
+                  <h3 className="dossier-label">
+                    <span>Changelog</span>
+                    <span className="dossier-label-sep">/</span>
+                    <span>更新</span>
+                  </h3>
+                  <ul className="dossier-log">
+                    {selected.changelog?.length ? (
+                      selected.changelog.map((item) => (
+                        <li className="dossier-log-row" key={item.version}>
+                          <span className="dossier-log-version">{item.version}</span>
+                          <span className="dossier-log-date">{item.date}</span>
+                          <span className="dossier-log-desc">{item.desc}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="dossier-log-empty">暂无更新</li>
+                    )}
+                  </ul>
+                </section>
+
               </div>
 
               <div ref={actionsRef} className="film-detail-actions">

@@ -12,12 +12,20 @@ export type DossierStep = {
   desc: string;
 };
 
+export type DossierChange = {
+  version: string;
+  date: string;
+  desc: string;
+};
+
 export type Dossier = {
   /** 100~200 字的详细介绍。 */
   longDescription: string;
   /** 技术栈 / 制作手段。 */
   techStack: string[];
   process: DossierStep[];
+  /** 更新日志，暂时留空，按 { version, date, desc } 追加。 */
+  changelog: DossierChange[];
 };
 
 export const DOSSIERS: Record<string, Dossier> = {
@@ -47,6 +55,7 @@ export const DOSSIERS: Record<string, Dossier> = {
         desc: "脏截止日期用 safeParse 兜底，persist 的 migrate 负责清洗旧数据。",
       },
     ],
+    changelog: [],
   },
   "02": {
     longDescription:
@@ -74,6 +83,7 @@ export const DOSSIERS: Record<string, Dossier> = {
         desc: "左侧卡片化作书脊，搜索直接过滤书架而不是跳到结果页。",
       },
     ],
+    changelog: [],
   },
   "03": {
     longDescription:
@@ -101,6 +111,7 @@ export const DOSSIERS: Record<string, Dossier> = {
         desc: "今日计数存本机，跨天按日期键自动清空。",
       },
     ],
+    changelog: [],
   },
   "04": {
     longDescription:
@@ -128,5 +139,6 @@ export const DOSSIERS: Record<string, Dossier> = {
         desc: "收藏城市存本机，定位走浏览器 API 并且允许随时退出。",
       },
     ],
+    changelog: [],
   },
 };
