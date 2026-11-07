@@ -62,76 +62,6 @@ const BASE_PROJECTS: Project[] = [
       "亮色玻璃拟态的天气台：晨光磨砂卡片浮在纸白地面上，超大温度读数、五日预报横滚、收藏与定位。React + TypeScript + OpenWeatherMap。",
     experienceHref: "https://atop49.github.io/weather-studio/",
   },
-  {
-    id: "05",
-    title: "潮汐",
-    meta: "短片 · 2026",
-    kicker: "Selected work",
-    image: asset("/illustrations/tide.svg"),
-    themeColor: "#F2EBD9",
-    description:
-      "一部关于退潮后留在沙滩上的记忆的短片。潮水带走了脚印，却留下了声音。",
-  },
-  {
-    id: "06",
-    title: "夜航",
-    meta: "纪录片 · 2025",
-    kicker: "Selected work",
-    image: asset("/illustrations/coast.svg"),
-    themeColor: "#D9E8E8",
-    description:
-      "跟随夜间货机穿越三座城市，记录塔台、跑道与黎明前最后一盏灯。",
-  },
-  {
-    id: "07",
-    title: "未寄出的信",
-    meta: "实验影像 · 2025",
-    kicker: "Selected work",
-    image: asset("/illustrations/alpine.svg"),
-    themeColor: "#E8D9D9",
-    description:
-      "用 16mm 残片重写一封没有地址的信。画面在显影液里缓慢浮出，又迅速褪去。",
-  },
-  {
-    id: "08",
-    title: "城市边缘",
-    meta: "摄影 · 2024",
-    kicker: "Selected work",
-    image: asset("/illustrations/coast.svg"),
-    themeColor: "#DCE4E8",
-    description:
-      "记录城乡接合部夜间灯火的摄影系列。每一扇亮着的窗，都是城市的一条边界。",
-  },
-  {
-    id: "09",
-    title: "午后三点",
-    meta: "短片 · 2024",
-    kicker: "Selected work",
-    image: asset("/illustrations/alpine.svg"),
-    themeColor: "#F0E2D2",
-    description:
-      "一个夏天午后，四个人在同一间屋子里等待。风扇转动，时间几乎停住。",
-  },
-  {
-    id: "10",
-    title: "回声",
-    meta: "声音装置 · 2023",
-    kicker: "Selected work",
-    image: asset("/illustrations/tide.svg"),
-    themeColor: "#E4DFEA",
-    description:
-      "在废弃剧院里搭建的声音装置。观众走入空场，脚步声被放大成一场没有乐手的演出。",
-  },
-  {
-    id: "11",
-    title: "北纬三十度",
-    meta: "纪录片 · 2023",
-    kicker: "Selected work",
-    image: asset("/illustrations/alpine.svg"),
-    themeColor: "#EADFD5",
-    description:
-      "沿北纬三十度线拍摄的地理纪录片。从高原到入海口，一条纬线串起不同的生活。",
-  },
 ];
 
 /* 详情页的档案长文本另存一处，按 id 合回项目对象：胶片带只关心卡片字段，
@@ -1563,7 +1493,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
 
         <header className="film-header">
           <span className="film-brand">Portfolio</span>
-          <span className="film-header-meta">11 frames · 2026</span>
+          <span className="film-header-meta">{PROJECTS.length} frames · 2026</span>
         </header>
 
         {/* 左缘铭文：竖排贴在画面最左侧，像胶片边缘的厂标。
@@ -1788,22 +1718,6 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
                   </ol>
                 </section>
 
-                <section className="dossier-block is-last">
-                  <h3 className="dossier-label">
-                    <span>Changelog</span>
-                    <span className="dossier-label-sep">/</span>
-                    <span>更新</span>
-                  </h3>
-                  <ul className="dossier-log">
-                    {selected.changelog?.map((item) => (
-                      <li className="dossier-log-row" key={item.version}>
-                        <span className="dossier-log-version">{item.version}</span>
-                        <span className="dossier-log-date">{item.date}</span>
-                        <span className="dossier-log-desc">{item.desc}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
               </div>
 
               <div ref={actionsRef} className="film-detail-actions">

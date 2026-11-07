@@ -1514,53 +1514,6 @@ html.detail-open .timeline-nav {
   text-wrap: pretty;
 }
 
-.dossier-log {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* 像字幕表：版本 / 日期 / 说明三列对齐。 */
-.dossier-log-row {
-  display: grid;
-  grid-template-columns: 3rem 3.4rem minmax(0, 1fr);
-  gap: 0.75rem;
-  align-items: baseline;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgb(from var(--text-primary) r g b / 0.07);
-}
-
-.dossier-log-row:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-.dossier-log-version {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-}
-
-.dossier-log-date {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-  opacity: 0.45;
-}
-
-.dossier-log-desc {
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--text-primary);
-  opacity: 0.72;
-}
-
 /* The title deliberately breaks out of the info column and crosses onto the
    media. The body copy stays in the left column. */
 .film-detail-title {
