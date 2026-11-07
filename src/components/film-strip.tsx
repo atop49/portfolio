@@ -344,9 +344,11 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       /* 键盘用户：Tab 到某张卡片时把胶片滚到它身上。
          焦点卡片停在视口左侧 30% 处——离镜头最近的一带，最清晰。 */
       const onFocusIn = (event: FocusEvent) => {
-        const frame = (event.target as HTMLElement | null)?.closest(
-          ".film-frame",
-        ) as HTMLElement | null;
+        const target = event.target as HTMLElement | null;
+        /* 只对键盘焦点让位：鼠标点击同样会触发 focus，若这时把胶片滑走，
+           mousedown 与 mouseup 会落在不同元素上，点击就作废了。 */
+        if (!target || !target.matches(":focus-visible")) return;
+        const frame = target.closest(".film-frame") as HTMLElement | null;
         if (!frame) return;
         const index = frames.indexOf(frame);
         if (index < 0) return;
