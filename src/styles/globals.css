@@ -922,23 +922,31 @@ html.detail-open .film-hint {
 
 .film-hint {
   position: absolute;
-  right: var(--page-gutter);
-  bottom: var(--page-gutter);
+  left: 50%;
+  bottom: calc(var(--page-gutter) * 0.9);
   z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
+  transform: translateX(-50%);
   font-family: var(--font-sans);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.2em;
+  line-height: 1;
   text-transform: uppercase;
-  color: var(--muted);
-  opacity: 0.55;
+  color: var(--text-primary);
+  opacity: 0.42;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform;
 }
 
-.film-hint-arrow {
-  color: var(--muted);
+.film-hint-inner {
+  display: inline-block;
+}
+
+@media (max-width: 1023px) {
+  .film-hint {
+    display: none;
+  }
 }
 
 .film-sr-only {
@@ -1262,13 +1270,21 @@ html.detail-open .film-hint {
 }
 
 .film-detail-description {
-  max-width: 60ch;
+  max-width: 62ch;
   margin-top: 1.2rem;
   font-family: var(--font-sans);
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: 0.9375rem;
+  line-height: 1.75;
   color: var(--paper);
-  opacity: 0.78;
+  opacity: 0.86;
+  text-wrap: pretty;
+}
+
+@media (max-width: 640px) {
+  .film-detail-description {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
 }
 
 .film-detail-actions {
@@ -1981,6 +1997,27 @@ html.theme-is-animating .film-detail-corner {
     opacity 200ms ease;
 }
 
+/* 顶部渐隐：内容滚到导航下方时被吃掉，导航永远压在干净的底上。 */
+.site-scrim {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  height: clamp(4.5rem, 7vw, 6rem);
+  background: linear-gradient(
+    to bottom,
+    var(--bg-primary) 0%,
+    var(--bg-primary) 38%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+html.detail-open .site-scrim {
+  opacity: 0;
+}
+
 .site-nav button {
   padding: 0;
   border: 0;
@@ -1989,7 +2026,7 @@ html.theme-is-animating .film-detail-corner {
   font: inherit;
   letter-spacing: inherit;
   text-transform: inherit;
-  opacity: 0.52;
+  opacity: 0.74;
   cursor: pointer;
   transition: opacity 200ms ease;
 }
@@ -2101,6 +2138,19 @@ html.detail-open .site-nav {
 .skills-toggle-all:hover,
 .skills-toggle-all:focus-visible {
   opacity: 1;
+}
+
+/* One-line position statement: what a reviewer should remember. */
+.skills-summary {
+  max-width: 34ch;
+  margin: 0 0 clamp(2rem, 5vh, 3rem);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans);
+  font-size: clamp(1.125rem, 1.6vw, 1.25rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+  text-wrap: balance;
 }
 
 .skills-list,
@@ -2323,28 +2373,121 @@ html.detail-open .site-nav {
 
 .about-role {
   margin: 1.1rem 0 0;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-geist-sans);
-  font-size: 11px;
+  font-size: clamp(0.8125rem, 1.1vw, 0.9375rem);
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.22em;
   line-height: 1.4;
+  opacity: 0.82;
   text-transform: uppercase;
 }
 
 .about-notes {
   max-width: 60ch;
-  margin-bottom: clamp(3.5rem, 10vh, 5.5rem);
+  margin-bottom: 0;
 }
 
 .about-notes p {
   margin: 0 0 1.6em;
-  color: rgb(245 241 232 / 0.85);
+  color: color-mix(in srgb, var(--text-primary) 86%, transparent);
   font-family: var(--font-geist-sans);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
   letter-spacing: 0.02em;
   line-height: 1.8;
+}
+
+/* Two-column body: director's note on the left, structured resume on the right. */
+.about-body {
+  display: grid;
+  gap: clamp(2.75rem, 6vw, 4.5rem);
+  margin-bottom: clamp(3.5rem, 10vh, 5.5rem);
+}
+
+@media (min-width: 900px) {
+  .about-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  }
+}
+
+.about-block-label {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.about-block-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: color-mix(in srgb, var(--text-primary) 16%, transparent);
+}
+
+.about-resume-group + .about-resume-group {
+  margin-top: 1.6rem;
+}
+
+.about-resume-heading {
+  margin: 0 0 0.55rem;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.about-resume-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid
+    color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+.about-resume-item {
+  display: grid;
+  grid-template-columns: 6.6rem minmax(0, 1fr);
+  gap: 0.2rem 1rem;
+  padding: 0.62rem 0 0.66rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--text-primary) 9%, transparent);
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+.about-resume-period {
+  grid-row: span 2;
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+.about-resume-title {
+  color: var(--text-primary);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+.about-resume-detail {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  opacity: 0.9;
 }
 
 .about-credits {

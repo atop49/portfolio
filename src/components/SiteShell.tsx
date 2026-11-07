@@ -186,6 +186,7 @@ export default function SiteShell() {
 
   return (
     <>
+      <div className="site-scrim" aria-hidden="true" />
       <nav className="site-nav" aria-label="主导航">
         <button
           type="button"

@@ -192,6 +192,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
+  const hintRef = useRef<HTMLSpanElement>(null);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -418,6 +419,24 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       };
     });
     return () => mm.revert();
+  }, []);
+
+  /* Hint that the strip is driven by the wheel: a slow, barely-there float.
+     Runs on every breakpoint it is visible at; disabled for reduced motion. */
+  useEffect(() => {
+    const hint = hintRef.current;
+    if (!hint || prefersReducedMotion()) return;
+    const tween = gsap.to(hint, {
+      y: -5,
+      duration: 2.1,
+      ease: "sine.inOut",
+      yoyo: true,
+      repeat: -1,
+    });
+    return () => {
+      tween.kill();
+      gsap.set(hint, { clearProps: "transform" });
+    };
   }, []);
 
   const openDetail = useCallback(
@@ -1355,8 +1374,9 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         </div>
 
         <p className="film-hint" aria-hidden="true">
-          <span>Scroll</span>
-          <span className="film-hint-arrow">↓</span>
+          <span className="film-hint-inner" ref={hintRef}>
+            [ Scroll to explore ]
+          </span>
         </p>
       </div>
 

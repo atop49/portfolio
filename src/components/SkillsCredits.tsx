@@ -160,6 +160,10 @@ export default function SkillsCredits() {
           </h1>
         </header>
 
+        <p className="skills-summary">
+          一名擅长将视觉设计与前端代码结合的创作者。
+        </p>
+
         <div className="skills-list-head">
           <p className="skills-list-label">Ability matrix</p>
           <button
