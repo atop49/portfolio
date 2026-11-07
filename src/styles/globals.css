@@ -383,14 +383,15 @@ html.detail-open .timeline-nav {
   z-index: 20;
   top: 0;
   bottom: 0;
-  width: 12%;
+  width: 20%;
   pointer-events: none;
   /* 片带背后是 .cine-backdrop 的纯黑，所以渐隐色必须也是纯黑。
      只让最外侧约 60px 压死，往里迅速让开，卡片不至于整张被吃掉。 */
   background: linear-gradient(
     to right,
-    #000 0%,
-    rgb(0 0 0 / 0.6) 34%,
+    rgb(0 0 0 / 0.92) 0%,
+    rgb(0 0 0 / 0.62) 28%,
+    rgb(0 0 0 / 0.22) 62%,
     rgb(0 0 0 / 0) 100%
   );
 }
@@ -399,8 +400,9 @@ html.detail-open .timeline-nav {
   right: 0;
   background: linear-gradient(
     to left,
-    #000 0%,
-    rgb(0 0 0 / 0.6) 34%,
+    rgb(0 0 0 / 0.92) 0%,
+    rgb(0 0 0 / 0.62) 28%,
+    rgb(0 0 0 / 0.22) 62%,
     rgb(0 0 0 / 0) 100%
   );
 }
@@ -431,6 +433,9 @@ html.detail-open .timeline-nav {
   transform-style: preserve-3d;
   transform-origin: 50% 50%;
   backface-visibility: hidden;
+  /* 每帧都在写 transform / opacity：提前立成合成层，
+     浏览器就不会在 3D 矩阵取整时闪 1px 的边。 */
+  will-change: transform, opacity;
   /* 角度与位移每帧都在变，transition 只会让木马拖影，所以不加。 */
   transition: none;
 }
@@ -443,7 +448,9 @@ html.detail-open .timeline-nav {
   display: flex;
   height: auto;
   flex-direction: column;
-  overflow: hidden;
+  /* 裁剪交给 .frame-window，卡片自身不再裁：留出余量，
+     旋转到位时不会被自己的盒子切掉一条边。 */
+  overflow: visible;
   border: 0;
   border-radius: 0;
   /* 纯黑片基：齿孔是靠 luminance 蒙版真打穿的，透出来的是这一层，

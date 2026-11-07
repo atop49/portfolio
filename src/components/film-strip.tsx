@@ -295,7 +295,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       const STEP_BASE = 0.26;
       const STEP_SPAN = 0.5;
       const MAX_ANGLE = 45;
-      const MAX_DEPTH = 200;
+      const MAX_DEPTH = 150;
       const MIN_SCALE = 0.8;
       const SIDE_OPACITY = 0.6;
 
