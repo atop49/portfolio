@@ -1162,69 +1162,79 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
     openTlRef.current = tl;
   }, [clearFlightTitle, selected]);
 
-  // 相纸微交互：指针在剧照上移动时，内层像纸轻微 3D 倾斜并放大；
-  // 外层投影反向偏移，纸就像真的离开了台面。Flip 只动外层容器，
-  // 所以这里只碰内层 plate 的 transform 和两个投影位移变量。
+  // 检片台里的媒体卡：指针在画幅上移动时整张相纸做 ±12° 的 3D 倾斜，
+  // 一层径向高光贴着指针走；指针离开时用 elastic 曲线回正，像被弹簧拉住。
+  // Flip 只量外层容器，倾斜只写在内层 plate 上，两者互不打扰。
   useEffect(() => {
     const media = mediaRef.current;
     const plate = plateRef.current;
     if (!selected || !media || !plate) return;
     if (prefersReducedMotion()) return;
 
+    const MAX_TILT = 12;
+    const glare = plate.querySelector<HTMLElement>(".media-glare");
+
+    let rotateX: ((value: number) => void) | null = null;
+    let rotateY: ((value: number) => void) | null = null;
+    let scale: ((value: number) => void) | null = null;
+    let liftX: ((value: number) => void) | null = null;
+    let liftY: ((value: number) => void) | null = null;
+
+    // quickTo 的底层是一个常驻 tween，被 kill 掉之后必须重建。
+    const buildSetters = () => {
+      rotateX = gsap.quickTo(plate, "rotationX", {
+        duration: 0.45,
+        ease: "power2.out",
+      });
+      rotateY = gsap.quickTo(plate, "rotationY", {
+        duration: 0.45,
+        ease: "power2.out",
+      });
+      scale = gsap.quickTo(plate, "scale", {
+        duration: 0.45,
+        ease: "power2.out",
+      });
+      liftX = gsap.quickTo(media, "--media-lift-x", {
+        duration: 0.6,
+        ease: "power2.out",
+      });
+      liftY = gsap.quickTo(media, "--media-lift-y", {
+        duration: 0.6,
+        ease: "power2.out",
+      });
+    };
+
     gsap.set(plate, {
       rotationX: 0,
       rotationY: 0,
       scale: 1,
-      transformPerspective: 1400,
       transformOrigin: "50% 50%",
     });
-
-    const rotateY = gsap.quickTo(plate, "rotationY", {
-      duration: 0.6,
-      ease: "power3.out",
-    });
-    const rotateX = gsap.quickTo(plate, "rotationX", {
-      duration: 0.6,
-      ease: "power3.out",
-    });
-    const scale = gsap.quickTo(plate, "scale", {
-      duration: 0.6,
-      ease: "power3.out",
-    });
-    const liftX = gsap.quickTo(media, "--media-lift-x", {
-      duration: 0.8,
-      ease: "power3.out",
-    });
-    const liftY = gsap.quickTo(media, "--media-lift-y", {
-      duration: 0.8,
-      ease: "power3.out",
-    });
+    buildSetters();
 
     let frame = 0;
     let pointer: { x: number; y: number } | null = null;
 
-    // Pointer moves are coalesced to one read of the rect per frame, so the
-    // tilt never forces a layout per raw pointer event.
+    // 指针事件合并到一帧里处理，每帧只读一次 rect。
     const apply = () => {
       frame = 0;
       if (!pointer) return;
       const rect = media.getBoundingClientRect();
       if (rect.width < 1 || rect.height < 1) return;
-      const nx = gsap.utils.clamp(
-        -1,
-        1,
-        ((pointer.x - rect.left) / rect.width) * 2 - 1,
-      );
-      const ny = gsap.utils.clamp(
-        -1,
-        1,
-        ((pointer.y - rect.top) / rect.height) * 2 - 1,
-      );
-      rotateY(nx * -2);
-      rotateX(ny * 2);
-      // 阴影朝鼠标的反方向让开，形成高低错层。
-      liftX(nx * -18);
-      liftY(ny * -12);
+      const px = (pointer.x - rect.left) / rect.width;
+      const py = (pointer.y - rect.top) / rect.height;
+      const nx = gsap.utils.clamp(-0.5, 0.5, px - 0.5);
+      const ny = gsap.utils.clamp(-0.5, 0.5, py - 0.5);
+      // 鼠标向上 → 卡片前倾；向右 → 卡片右倾。
+      rotateY?.(nx * MAX_TILT * 2);
+      rotateX?.(-ny * MAX_TILT * 2);
+      // 投影朝指针的反方向让开，倾斜越狠让得越多。
+      liftX?.(nx * -40);
+      liftY?.(ny * -24);
+      if (glare) {
+        glare.style.setProperty("--glare-x", `${(px * 100).toFixed(2)}%`);
+        glare.style.setProperty("--glare-y", `${(py * 100).toFixed(2)}%`);
+      }
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -1232,39 +1242,56 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
       if (!frame) frame = window.requestAnimationFrame(apply);
     };
 
-    const onPointerEnter = () => scale(1.02);
+    const onPointerEnter = () => {
+      gsap.killTweensOf(plate);
+      buildSetters();
+      scale?.(1.02);
+      if (glare) gsap.to(glare, { opacity: 1, duration: 0.35, ease: "power2.out" });
+    };
 
     const onPointerLeave = () => {
       pointer = null;
-      rotateX(0);
-      rotateY(0);
-      scale(1);
-      liftX(0);
-      liftY(0);
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      // 收掉所有常驻 tween，才能让回弹独占这几个属性。
+      gsap.killTweensOf(plate);
+      rotateX = rotateY = scale = null;
+      gsap.to(plate, {
+        rotationX: 0,
+        rotationY: 0,
+        scale: 1,
+        duration: 1.2,
+        ease: "elastic.out(1, 0.3)",
+      });
+      liftX?.(0);
+      liftY?.(0);
+      if (glare) gsap.to(glare, { opacity: 0, duration: 0.4, ease: "power2.out" });
     };
 
-    const onBlurWindow = () => {
+    const onVisibility = () => {
       if (document.hidden) onPointerLeave();
     };
 
     media.addEventListener("pointerenter", onPointerEnter);
     media.addEventListener("pointermove", onPointerMove);
     media.addEventListener("pointerleave", onPointerLeave);
-    document.addEventListener("visibilitychange", onBlurWindow);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       media.removeEventListener("pointerenter", onPointerEnter);
       media.removeEventListener("pointermove", onPointerMove);
       media.removeEventListener("pointerleave", onPointerLeave);
-      document.removeEventListener("visibilitychange", onBlurWindow);
+      document.removeEventListener("visibilitychange", onVisibility);
       gsap.killTweensOf(plate);
+      if (glare) gsap.killTweensOf(glare);
       gsap.set(plate, { clearProps: "transform" });
       media.style.removeProperty("--media-lift-x");
       media.style.removeProperty("--media-lift-y");
     };
   }, [selected]);
-
   // Lock the page behind the dialog and keep the scrollbar gutter stable.
   useEffect(() => {
     const root = document.documentElement;
@@ -1530,6 +1557,8 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
                 />
                 <div className="film-detail-media-scrim" />
                 <div className="film-detail-media-grain" />
+                {/* 跟随指针的径向反光：圆心由 --glare-x/--glare-y 控制。 */}
+                <div className="media-glare" aria-hidden="true" />
               </div>
               <span className="film-detail-index" aria-hidden="true">
                 {selected.id}

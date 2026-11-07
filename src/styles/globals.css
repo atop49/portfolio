@@ -1213,7 +1213,7 @@ html.detail-open .timeline-nav {
      容器只负责透视、投影和网格定位。 */
   border-radius: 4px;
   background-color: transparent;
-  perspective: 1400px;
+  perspective: 1200px;
   --media-lift-x: 0px;
   --media-lift-y: 0px;
   box-shadow:
@@ -1250,32 +1250,23 @@ html.detail-open .timeline-nav {
   pointer-events: none;
 }
 
-/* 玻璃反光：一条斜向高光，指针进入时从左扫到右，移出即隐去。 */
-.film-detail-media-plate::after {
-  content: "";
+/* 径向反光：一团跟着指针跑的高光，圆心由 --glare-x / --glare-y 控制。
+   overlay 混合让它在暗画面上提亮、在亮画面上压住，不会糊成一块白斑。 */
+.media-glare {
   position: absolute;
-  inset: -20% -70%;
+  inset: 0;
   z-index: 4;
-  background: linear-gradient(
-    105deg,
-    transparent 20%,
-    rgb(255 255 255 / 0.15) 25%,
-    transparent 30%
+  background: radial-gradient(
+    circle farthest-side at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgb(255 255 255 / 0.4),
+    transparent 60%
   );
+  mix-blend-mode: overlay;
   opacity: 0;
-  transform: translateX(-60%);
   pointer-events: none;
-  transition: opacity 180ms ease;
+  border-radius: inherit;
 }
 
-.film-detail-media:hover .film-detail-media-plate::after,
-.film-detail-media:focus-within .film-detail-media-plate::after {
-  opacity: 1;
-  transform: translateX(60%);
-  transition:
-    transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 140ms ease;
-}
 
 /* 银盐颗粒：极淡噪点压在图片上，去掉数码塑料感。 */
 .film-detail-media-grain {
@@ -1316,11 +1307,9 @@ html.detail-open .timeline-nav {
     transition: none;
   }
 
-  .film-detail-media:hover .film-detail-media-plate::after,
-  .film-detail-media:focus-within .film-detail-media-plate::after {
-    opacity: 0;
-    transform: translateX(-60%);
-    transition: none;
+  /* 减弱动效下不开倾斜与流光。 */
+  .media-glare {
+    display: none;
   }
 }
 
