@@ -78,9 +78,7 @@ export default function AboutTitlePage() {
         <div className="about-body">
           <div className="about-notes" data-about-reveal>
             <p className="about-block-label">Director&rsquo;s note</p>
-            <p>
-              我是一名大二学生，目前正在深入学习 AI 及其相关技术。
-            </p>
+            <p>我是一名大二学生，目前正在深入学习 AI 及其相关技术。</p>
             <p>
               因为对电影有着极度热爱，所以我把自己的作品集打造成了一台&ldquo;非线性剪辑台&rdquo;。
               在这里，每一段代码、每一个项目，都是我剪出的一帧画面。
@@ -112,15 +110,16 @@ export default function AboutTitlePage() {
               GitHub
             </a>
             <span aria-hidden="true">·</span>
-            <a
-              href="https://x.com"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
+            <a href="https://x.com" target="_blank" rel="noreferrer noopener">
               X
             </a>
           </div>
-          <a className="about-cta" href="mailto:348170342@qq.com">
+          <a
+            className="about-cta"
+            href="https://github.com/atop49"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             Get in touch
           </a>
           <p className="about-fin">Written, designed &amp; coded by myself</p>
