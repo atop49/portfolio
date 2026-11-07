@@ -26,7 +26,7 @@ const PROJECTS: Project[] = [
     themeColor: "#1A1814",
     description:
       "剪辑台式的任务管理器。任务即素材条目：优先级徽记、时间码索引、统计读数，完成时划出淡出。React + TypeScript + Zustand + Tailwind。",
-    experienceHref: "https://atop49-todo.netlify.app",
+    experienceHref: "https://atop49.github.io/todo-studio/",
   },
   {
     id: "02",
@@ -37,7 +37,7 @@ const PROJECTS: Project[] = [
     themeColor: "#F2ECDD",
     description:
       "明亮书房里的写作台：左侧等宽字稿纸，右侧杂志级实时预览，oneLight 亮色代码高亮，书架式笔记管理。React + TypeScript + react-markdown。",
-    experienceHref: "https://atop49-notes.netlify.app",
+    experienceHref: "https://atop49.github.io/notes-studio/",
   },
   {
     id: "03",
@@ -48,7 +48,7 @@ const PROJECTS: Project[] = [
     themeColor: "#F5F1E6",
     description:
       "一整页留白，中央只悬一只圆环。专注 25 分钟、休息 5 分钟，暂停时数字呼吸，到点圆环跳动。React + TypeScript + Web Audio。",
-    experienceHref: "https://atop49-pomodoro.netlify.app",
+    experienceHref: "https://atop49.github.io/pomodoro-studio/",
   },
   {
     id: "04",
@@ -59,7 +59,7 @@ const PROJECTS: Project[] = [
     themeColor: "#E8F0F2",
     description:
       "亮色玻璃拟态的天气台：晨光磨砂卡片浮在纸白地面上，超大温度读数、五日预报横滚、收藏与定位。React + TypeScript + OpenWeatherMap。",
-    experienceHref: "https://atop49-weather.netlify.app",
+    experienceHref: "https://atop49.github.io/weather-studio/",
   },
   {
     id: "05",
