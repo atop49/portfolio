@@ -1361,6 +1361,8 @@ html.detail-open .timeline-nav {
   max-height: 80vh;
   margin-top: 1rem;
   padding-right: 24px;
+  /* 上下留出缓冲：第一条不被顶部渐隐切头，滚到底时最后一行完整露出。 */
+  padding-block: 0.85rem 5rem;
   overflow-y: auto;
   overscroll-behavior: contain;
   /* 上下边缘淡出，文字不会在硬边框上被一刀切断。 */
