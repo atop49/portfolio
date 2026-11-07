@@ -10,13 +10,14 @@ import FrameCard, { type Project } from "./frame-card";
 import ExploreTrigger from "./explore-trigger";
 import TimelineNavigator from "./timeline-navigator";
 import { splitDisplayTitle } from "@/lib/display-title";
+import { DOSSIERS } from "@/lib/project-dossier";
 
 /* GitHub Pages 部署在 /portfolio 子路径下，public 里的图片不会自动带前缀，
    这里手动拼一次；本地 dev 时 NEXT_PUBLIC_BASE_PATH 为空串。 */
 const ASSET_PREFIX = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${ASSET_PREFIX}${path}`;
 
-const PROJECTS: Project[] = [
+const BASE_PROJECTS: Project[] = [
   {
     id: "01",
     title: "待办事项",
@@ -133,6 +134,13 @@ const PROJECTS: Project[] = [
   },
 ];
 
+/* 详情页的档案长文本另存一处，按 id 合回项目对象：胶片带只关心卡片字段，
+   把四段长文本塞进上面那张表会让它彻底失去可读性。 */
+const PROJECTS: Project[] = BASE_PROJECTS.map((project) => ({
+  ...project,
+  ...DOSSIERS[project.id],
+}));
+
 /**
  * Only this media query gets the scroll-driven horizontal treatment.
  * Mobile falls back to a vertical card flow, and reduced-motion users get a
@@ -211,6 +219,8 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
   const kickerRef = useRef<HTMLParagraphElement>(null);
   const metaRef = useRef<HTMLParagraphElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
+  /** 档案列：独立滚动，滚轮不冒泡到胶片带。 */
+  const leftScrollRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const mediaExperienceRef = useRef<HTMLDivElement>(null);
   const titleCloneRef = useRef<HTMLHeadingElement | null>(null);
@@ -963,6 +973,42 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
     closeTlRef.current = tl;
   }, [clearJustClosed, clearFlightTitle, markJustClosed, selected]);
 
+  /* 档案列的入场：整体轻推一下就好，容器内部不再挂任何滚动动画——
+     原生滚动本身就是最顺的那种。 */
+  useEffect(() => {
+    if (!selected) return;
+    const el = leftScrollRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    if (prefersReducedMotion()) {
+      gsap.set(el, { autoAlpha: 1, y: 0 });
+      return;
+    }
+    const tween = gsap.fromTo(
+      el,
+      { autoAlpha: 0, y: 20 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.6,
+        delay: 0.18,
+        ease: "power2.out",
+        clearProps: "transform",
+      },
+    );
+    return () => {
+      tween.kill();
+    };
+  }, [selected]);
+
+  /* 滚轮隔离：档案区自己滚，事件不要再冒到胶片带的 wheel 监听上。 */
+  useEffect(() => {
+    const el = leftScrollRef.current;
+    if (!el) return;
+    const stopWheel = (event: WheelEvent) => event.stopPropagation();
+    el.addEventListener("wheel", stopWheel, { passive: true });
+    return () => el.removeEventListener("wheel", stopWheel);
+  }, [selected]);
   // Run the opening animation only after the dialog exists. Keeping the root
   // hidden in its initial inline style prevents a full-screen flash.
   useEffect(() => {
@@ -1694,9 +1740,71 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
               <p ref={metaRef} className="film-detail-meta">
                 {selected.meta}
               </p>
-              <p ref={descriptionRef} className="film-detail-description">
-                {selected.description}
-              </p>
+              <div ref={leftScrollRef} className="left-scroll-container">
+                <p ref={descriptionRef} className="film-detail-description">
+                  {selected.description}
+                </p>
+
+                <section className="dossier-block">
+                  <h3 className="dossier-label">
+                    <span>Overview</span>
+                    <span className="dossier-label-sep">/</span>
+                    <span>详情</span>
+                  </h3>
+                  <p className="dossier-text">{selected.longDescription}</p>
+                </section>
+
+                <section className="dossier-block">
+                  <h3 className="dossier-label">
+                    <span>Tech stack</span>
+                    <span className="dossier-label-sep">/</span>
+                    <span>技术栈</span>
+                  </h3>
+                  <ul className="dossier-tags">
+                    {selected.techStack?.map((item) => (
+                      <li className="dossier-tag" key={item}>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section className="dossier-block">
+                  <h3 className="dossier-label">
+                    <span>Process</span>
+                    <span className="dossier-label-sep">/</span>
+                    <span>流程</span>
+                  </h3>
+                  <ol className="dossier-steps">
+                    {selected.process?.map((item) => (
+                      <li className="dossier-step" key={item.step}>
+                        <span className="dossier-step-index">{item.step}</span>
+                        <span className="dossier-step-body">
+                          <span className="dossier-step-title">{item.title}</span>
+                          <span className="dossier-step-desc">{item.desc}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+
+                <section className="dossier-block is-last">
+                  <h3 className="dossier-label">
+                    <span>Changelog</span>
+                    <span className="dossier-label-sep">/</span>
+                    <span>更新</span>
+                  </h3>
+                  <ul className="dossier-log">
+                    {selected.changelog?.map((item) => (
+                      <li className="dossier-log-row" key={item.version}>
+                        <span className="dossier-log-version">{item.version}</span>
+                        <span className="dossier-log-date">{item.date}</span>
+                        <span className="dossier-log-desc">{item.desc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
 
               <div ref={actionsRef} className="film-detail-actions">
                 {selected.externalHref ? (

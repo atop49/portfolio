@@ -1342,12 +1342,221 @@ html.detail-open .timeline-nav {
   position: relative;
   z-index: 2;
   order: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   width: 100%;
   min-width: 0;
   max-width: 34rem;
-  align-self: center;
-  /* Nudge the copy just above the media's optical center. */
-  transform: translateY(-2vh);
+  /* 写死一屏高：内容再长也只在 .left-scroll-container 里滚，
+     整个检片台不会被撑出页面滚动条。 */
+  height: calc(100svh - 2 * clamp(3rem, 8vh, 6rem));
+  overflow: hidden;
+}
+
+/* 档案滚动区：标题/操作按钮留在外面当固定头条与页脚，中间这段自己滚。 */
+.left-scroll-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 80vh;
+  margin-top: 1rem;
+  padding-right: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 上下边缘淡出，文字不会在硬边框上被一刀切断。 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+  scrollbar-width: thin;
+  scrollbar-color: rgb(150 150 150 / 0.3) transparent;
+}
+
+.left-scroll-container::-webkit-scrollbar {
+  width: 3px;
+}
+
+.left-scroll-container::-webkit-scrollbar-thumb {
+  background: rgb(150 150 150 / 0.3);
+  border-radius: 3px;
+}
+
+.left-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* —— 项目档案：纯文本平铺，用字号/字距/留白分层，不做折叠。 —— */
+.dossier-block {
+  margin-top: 2.5rem;
+}
+
+.dossier-block:first-of-type {
+  margin-top: 2rem;
+}
+
+.dossier-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper);
+  opacity: 0.5;
+}
+
+.dossier-label-sep {
+  opacity: 0.6;
+}
+
+.dossier-text {
+  margin: 0;
+  max-width: 58ch;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  text-wrap: pretty;
+}
+
+.dossier-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dossier-tag {
+  padding: 4px 8px;
+  border: 1px solid rgb(from var(--text-primary) r g b / 0.15);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.dossier-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dossier-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+
+/* 序号与正文之间那道极淡的竖线。 */
+.dossier-step::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 1.55rem;
+  width: 1px;
+  background: rgb(from var(--text-primary) r g b / 0.12);
+}
+
+.dossier-step-index {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  opacity: 0.45;
+}
+
+.dossier-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-left: 0.35rem;
+}
+
+.dossier-step-title {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.dossier-step-desc {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  opacity: 0.62;
+  text-wrap: pretty;
+}
+
+.dossier-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 像字幕表：版本 / 日期 / 说明三列对齐。 */
+.dossier-log-row {
+  display: grid;
+  grid-template-columns: 3rem 3.4rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: baseline;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgb(from var(--text-primary) r g b / 0.07);
+}
+
+.dossier-log-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.dossier-log-version {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+
+.dossier-log-date {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  opacity: 0.45;
+}
+
+.dossier-log-desc {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  opacity: 0.72;
 }
 
 /* The title deliberately breaks out of the info column and crosses onto the
@@ -1357,7 +1566,7 @@ html.detail-open .timeline-nav {
   z-index: 10;
   width: max-content;
   max-width: none;
-  margin: 1.8rem 0 0;
+  margin: 1rem 0 0;
   font-family:
     var(--font-youshe), "YouSheBiaoTiHei", Impact, sans-serif;
   font-weight: 400;
@@ -1377,7 +1586,7 @@ html.detail-open .timeline-nav {
 .film-detail-title.is-short {
   margin-left: clamp(1.5rem, 4vw, 3.5rem);
   max-width: none;
-  font-size: clamp(6rem, 12vw, 14rem);
+  font-size: clamp(5rem, 9.5vw, 12rem);
 }
 
 /* 4+ characters: two staggered lines at a slightly smaller optical size. The
@@ -1450,7 +1659,7 @@ html.detail-open .timeline-nav {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.75rem;
+  margin-top: 1.2rem;
 }
 
 /* Experience link docks under the inspection image, not on the strip card.
@@ -1682,9 +1891,21 @@ html.detail-open .timeline-nav {
     margin-top: 0.25rem;
   }
 
+  /* 小屏是整页滚动，左侧档案不再自己滚：把固定高与内滚动都交还给页面。 */
   .film-detail-info {
     max-width: none;
+    height: auto;
+    overflow: visible;
     transform: none;
+  }
+
+  .left-scroll-container {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    margin-top: 1.25rem;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .film-detail-title {

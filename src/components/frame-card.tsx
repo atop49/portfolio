@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import type { Dossier } from "@/lib/project-dossier";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { splitDisplayTitle } from "@/lib/display-title";
@@ -23,6 +24,11 @@ export type Project = {
   description: string;
   experienceHref?: string;
   externalHref?: string;
+  /** 详情页左侧「项目档案」用到的扩展字段，见 lib/project-dossier.ts。 */
+  longDescription?: Dossier["longDescription"];
+  techStack?: Dossier["techStack"];
+  process?: Dossier["process"];
+  changelog?: Dossier["changelog"];
 };
 
 type FrameCardProps = {
