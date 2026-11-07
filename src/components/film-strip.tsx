@@ -11,13 +11,18 @@ import ExploreTrigger from "./explore-trigger";
 import TimelineNavigator from "./timeline-navigator";
 import { splitDisplayTitle } from "@/lib/display-title";
 
+/* GitHub Pages 部署在 /portfolio 子路径下，public 里的图片不会自动带前缀，
+   这里手动拼一次；本地 dev 时 NEXT_PUBLIC_BASE_PATH 为空串。 */
+const ASSET_PREFIX = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const asset = (path: string) => `${ASSET_PREFIX}${path}`;
+
 const PROJECTS: Project[] = [
   {
     id: "01",
     title: "待办事项",
     meta: "React 应用 · 2026",
     kicker: "Selected work",
-    image: "/illustrations/todo.svg",
+    image: asset("/illustrations/todo.svg"),
     themeColor: "#1A1814",
     description:
       "剪辑台式的任务管理器。任务即素材条目：优先级徽记、时间码索引、统计读数，完成时划出淡出。React + TypeScript + Zustand + Tailwind。",
@@ -28,7 +33,7 @@ const PROJECTS: Project[] = [
     title: "Markdown 笔记",
     meta: "React 应用 · 2026",
     kicker: "Selected work",
-    image: "/illustrations/notes.svg",
+    image: asset("/illustrations/notes.svg"),
     themeColor: "#F2ECDD",
     description:
       "明亮书房里的写作台：左侧等宽字稿纸，右侧杂志级实时预览，oneLight 亮色代码高亮，书架式笔记管理。React + TypeScript + react-markdown。",
@@ -39,7 +44,7 @@ const PROJECTS: Project[] = [
     title: "番茄钟",
     meta: "React 应用 · 2026",
     kicker: "Selected work",
-    image: "/illustrations/pomodoro.svg",
+    image: asset("/illustrations/pomodoro.svg"),
     themeColor: "#F5F1E6",
     description:
       "一整页留白，中央只悬一只圆环。专注 25 分钟、休息 5 分钟，暂停时数字呼吸，到点圆环跳动。React + TypeScript + Web Audio。",
@@ -50,7 +55,7 @@ const PROJECTS: Project[] = [
     title: "天气",
     meta: "React 应用 · 2026",
     kicker: "Selected work",
-    image: "/illustrations/weather.svg",
+    image: asset("/illustrations/weather.svg"),
     themeColor: "#E8F0F2",
     description:
       "亮色玻璃拟态的天气台：晨光磨砂卡片浮在纸白地面上，超大温度读数、五日预报横滚、收藏与定位。React + TypeScript + OpenWeatherMap。",
@@ -61,7 +66,7 @@ const PROJECTS: Project[] = [
     title: "潮汐",
     meta: "短片 · 2026",
     kicker: "Selected work",
-    image: "/illustrations/tide.svg",
+    image: asset("/illustrations/tide.svg"),
     themeColor: "#F2EBD9",
     description:
       "一部关于退潮后留在沙滩上的记忆的短片。潮水带走了脚印，却留下了声音。",
@@ -71,7 +76,7 @@ const PROJECTS: Project[] = [
     title: "夜航",
     meta: "纪录片 · 2025",
     kicker: "Selected work",
-    image: "/illustrations/coast.svg",
+    image: asset("/illustrations/coast.svg"),
     themeColor: "#D9E8E8",
     description:
       "跟随夜间货机穿越三座城市，记录塔台、跑道与黎明前最后一盏灯。",
@@ -81,7 +86,7 @@ const PROJECTS: Project[] = [
     title: "未寄出的信",
     meta: "实验影像 · 2025",
     kicker: "Selected work",
-    image: "/illustrations/alpine.svg",
+    image: asset("/illustrations/alpine.svg"),
     themeColor: "#E8D9D9",
     description:
       "用 16mm 残片重写一封没有地址的信。画面在显影液里缓慢浮出，又迅速褪去。",
@@ -91,7 +96,7 @@ const PROJECTS: Project[] = [
     title: "城市边缘",
     meta: "摄影 · 2024",
     kicker: "Selected work",
-    image: "/illustrations/coast.svg",
+    image: asset("/illustrations/coast.svg"),
     themeColor: "#DCE4E8",
     description:
       "记录城乡接合部夜间灯火的摄影系列。每一扇亮着的窗，都是城市的一条边界。",
@@ -101,7 +106,7 @@ const PROJECTS: Project[] = [
     title: "午后三点",
     meta: "短片 · 2024",
     kicker: "Selected work",
-    image: "/illustrations/alpine.svg",
+    image: asset("/illustrations/alpine.svg"),
     themeColor: "#F0E2D2",
     description:
       "一个夏天午后，四个人在同一间屋子里等待。风扇转动，时间几乎停住。",
@@ -111,7 +116,7 @@ const PROJECTS: Project[] = [
     title: "回声",
     meta: "声音装置 · 2023",
     kicker: "Selected work",
-    image: "/illustrations/tide.svg",
+    image: asset("/illustrations/tide.svg"),
     themeColor: "#E4DFEA",
     description:
       "在废弃剧院里搭建的声音装置。观众走入空场，脚步声被放大成一场没有乐手的演出。",
@@ -121,7 +126,7 @@ const PROJECTS: Project[] = [
     title: "北纬三十度",
     meta: "纪录片 · 2023",
     kicker: "Selected work",
-    image: "/illustrations/alpine.svg",
+    image: asset("/illustrations/alpine.svg"),
     themeColor: "#EADFD5",
     description:
       "沿北纬三十度线拍摄的地理纪录片。从高原到入海口，一条纬线串起不同的生活。",
