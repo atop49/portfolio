@@ -62,7 +62,17 @@ const BASE_PROJECTS: Project[] = [
       "亮色玻璃拟态的天气台：晨光磨砂卡片浮在纸白地面上，超大温度读数、五日预报横滚、收藏与定位。React + TypeScript + OpenWeatherMap。",
     experienceHref: "https://atop49.github.io/weather-studio/",
   },
-];
+  {
+    id: "05",
+    title: "星雨汇",
+    meta: "React 应用 · 2026",
+    kicker: "Selected work",
+    image: asset("/illustrations/meteor.svg"),
+    themeColor: "#0B1020",
+    description:
+      "流星雨观测指南。全年雨历、ZHR 预报与倒计时，配上 3D 轨道视图、模拟观测画布和真实天气条件。React + TypeScript + three.js + Recharts。",
+    experienceHref: "https://atop49.github.io/meteorwatch/",
+  },];
 
 /* 详情页的档案长文本另存一处，按 id 合回项目对象：胶片带只关心卡片字段，
    把四段长文本塞进上面那张表会让它彻底失去可读性。 */
