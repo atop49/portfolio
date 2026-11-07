@@ -389,9 +389,9 @@ html.detail-open .timeline-nav {
      只让最外侧约 60px 压死，往里迅速让开，卡片不至于整张被吃掉。 */
   background: linear-gradient(
     to right,
-    rgb(0 0 0 / 0.92) 0%,
-    rgb(0 0 0 / 0.62) 28%,
-    rgb(0 0 0 / 0.22) 62%,
+    rgb(0 0 0 / 0.9) 0%,
+    rgb(0 0 0 / 0.34) 24%,
+    rgb(0 0 0 / 0.08) 56%,
     rgb(0 0 0 / 0) 100%
   );
 }
@@ -400,9 +400,9 @@ html.detail-open .timeline-nav {
   right: 0;
   background: linear-gradient(
     to left,
-    rgb(0 0 0 / 0.92) 0%,
-    rgb(0 0 0 / 0.62) 28%,
-    rgb(0 0 0 / 0.22) 62%,
+    rgb(0 0 0 / 0.9) 0%,
+    rgb(0 0 0 / 0.34) 24%,
+    rgb(0 0 0 / 0.08) 56%,
     rgb(0 0 0 / 0) 100%
   );
 }
