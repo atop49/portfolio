@@ -20,30 +20,26 @@ type SkillAct = {
   rows: SkillRow[];
 };
 
+/* 只写现在真的在做的事：AI 工具、前端基础、排版，以及日常在用的工具。 */
 const ACTS: SkillAct[] = [
   {
     index: "01",
     title: "Capabilities",
     rows: [
       {
-        category: "Brand Identity",
-        name: "品牌视觉设计",
-        desc: "从策略到视觉落地的完整品牌体系构建。",
+        category: "AI Tools",
+        name: "AI 工具应用",
+        desc: "能熟练使用各类大语言模型与 AI 生成工具辅助开发与设计，把想法快速推到可以验证的版本。",
       },
       {
-        category: "Motion & Interaction",
-        name: "动态交互设计",
-        desc: "用时间轴与状态过渡，让界面拥有叙事节奏。",
+        category: "Frontend",
+        name: "前端基础开发",
+        desc: "用 HTML / CSS / JS 与 React 搭出可交互的界面，从结构、状态到部署能独立走完一遍。",
       },
       {
-        category: "Creative Coding",
-        name: "创意开发",
-        desc: "把设计稿还原为可运行的交互体验，细节不妥协。",
-      },
-      {
-        category: "Experience",
-        name: "全链路体验规划",
-        desc: "从首次触达到留存回访，规划完整的使用旅程。",
+        category: "Visual & Type",
+        name: "视觉与排版设计",
+        desc: "在意信息层级、留白与字距，用极简的排版把复杂的内容讲清楚。",
       },
     ],
   },
@@ -52,29 +48,34 @@ const ACTS: SkillAct[] = [
     title: "Tools",
     rows: [
       {
-        category: "Figma",
-        name: "界面与原型",
-        desc: "高保真原型与设计系统搭建的主要工作台。",
+        category: "React",
+        name: "组件化界面",
+        desc: "用组件与状态组织界面，处理列表、筛选、动效这类真实交互。",
       },
       {
-        category: "Cinema 4D",
-        name: "三维视觉",
-        desc: "场景搭建、材质灯光与动态图形的三维表达。",
+        category: "TypeScript",
+        name: "类型化的前端",
+        desc: "给数据与接口定好形状，让错误在编译期就暴露，而不是上线之后。",
       },
       {
-        category: "After Effects",
-        name: "动态影像",
-        desc: "片头、转场与复杂时间轴动效的合成输出。",
+        category: "Tailwind CSS",
+        name: "原子化样式",
+        desc: "用约束好的设计变量快速搭页面，保持间距、字级与颜色的一致性。",
       },
       {
         category: "GSAP",
-        name: "网页动效",
-        desc: "以时间线和滚动触发实现电影级的网页叙事。",
+        name: "时间线与滚动动效",
+        desc: "把入场、转场与滚动叙事串在同一条时间线上，控制每一帧的节奏。",
       },
       {
-        category: "Blender",
-        name: "造型与渲染",
-        desc: "开放流程下的建模、雕刻与写实渲染补充。",
+        category: "Git & GitHub",
+        name: "版本与部署",
+        desc: "分支、提交、Actions 自动构建，把作品推到 GitHub Pages 上持续更新。",
+      },
+      {
+        category: "LLM",
+        name: "AI 辅助编码",
+        desc: "把大模型当作结对伙伴：读文档、拆问题、审代码，而不是直接复制答案。",
       },
     ],
   },
@@ -83,24 +84,19 @@ const ACTS: SkillAct[] = [
     title: "Collaboration",
     rows: [
       {
-        category: "Co-creation",
-        name: "需求共创",
-        desc: "与产品和业务一起定义问题，而不是只接需求。",
+        category: "Open Source",
+        name: "开源社区学习",
+        desc: "在别人的仓库里阅读实现、提 issue、看讨论，把社区当成第二课堂。",
       },
       {
-        category: "Agile",
-        name: "敏捷迭代",
-        desc: "小步快跑，用可验证的版本持续逼近正确解。",
+        category: "Project-based",
+        name: "项目驱动学习",
+        desc: "先定一个想做成的东西，缺什么补什么，在交付里学，而不是在教程里学。",
       },
       {
-        category: "Review",
-        name: "设计走查",
-        desc: "上线前逐像素核对还原度，守住体验底线。",
-      },
-      {
-        category: "Mentoring",
-        name: "带教指导",
-        desc: "沉淀方法论，帮助团队新成员快速进入状态。",
+        category: "Cross-disciplinary",
+        name: "跨学科思考",
+        desc: "把电影、摄影与叙事的经验带进代码，让界面除了好用，也值得被看。",
       },
     ],
   },
@@ -160,7 +156,7 @@ export default function SkillsCredits() {
         </header>
 
         <p className="skills-summary">
-          一名擅长将视觉设计与前端代码结合的创作者。
+          一名对 AI 充满好奇的大二学生，正在探索技术与视觉的边界。
         </p>
 
         <div className="skills-list-head">

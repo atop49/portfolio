@@ -2623,6 +2623,8 @@ html.detail-open .site-nav {
 }
 
 .skills-note {
+  /* 说明文字与中文技能名左对齐（跳过 category 那一列），像字幕的悬挂缩进。 */
+  padding-left: calc(min(34%, 13.5rem) + clamp(0.75rem, 2vw, 1.25rem));
   max-height: 0;
   overflow: hidden;
   opacity: 0;
@@ -2634,7 +2636,7 @@ html.detail-open .site-nav {
 }
 
 .skills-note p {
-  width: min(100%, 60ch);
+  width: min(100%, 54ch);
   margin: 0 0 0.9rem;
   color: var(--text-secondary);
   font-family: var(--font-geist-sans);
@@ -2647,7 +2649,7 @@ html.detail-open .site-nav {
 .skills-item:hover .skills-note,
 .skills-item:focus-within .skills-note,
 .skills-list.is-expanded .skills-note {
-  max-height: 4rem;
+  max-height: 7rem;
   opacity: 1;
   transform: translateY(0);
 }
