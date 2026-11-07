@@ -284,25 +284,30 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
     const mm = gsap.matchMedia();
 
     mm.add(DESKTOP_MOTION, () => {
-      /* 滚轮直接驱动胶片向左（页面本身不再滚动），阻尼靠每帧插值。
-         位移一旦越过一整段的宽度，就把轨道瞬间右移一段——三段内容逐像素
-         相同，所以这次复位在眼里是不存在的，胶片因此永远滑不到头。 */
-      const BASE_RY = 25;
-      const BASE_RX = 5;
-      const ROLL = 4;
+      /* 3D 旋转木马（Cover Flow）：轨道本身只做水平平移，
+         每一格的角度/纵深/缩放都由"它离屏幕中轴多远"算出来——
+         正中那格正面朝人，两侧 ±45° 向内转、后退 200px、缩到 0.8。
+         轨道内容复制三段，滑出一整段就瞬间平移回来，所以永远滑不到头。 */
       const WHEEL_SPEED = 0.9;
       const DAMPING = 0.12;
+      const MAX_ANGLE = 45;
+      const MAX_DEPTH = 200;
+      const MIN_SCALE = 0.8;
+      const SIDE_OPACITY = 0.6;
 
       let setWidth = 0;
+      let pitch = 0;
+      let lastInputAt = 0;
+      let anchor = 0;
       let x = 0;
       let targetX = 0;
-      let currentRy = BASE_RY;
-      let targetRy = BASE_RY;
-      let lastInputAt = 0;
       let paused = false;
 
       const frames = Array.from(
         track.querySelectorAll<HTMLElement>(".film-frame"),
+      );
+      const cards = frames.map((frame) =>
+        frame.querySelector<HTMLElement>(".frame-card"),
       );
       let frameCenters: number[] = [];
       let frameWidths: number[] = [];
@@ -321,41 +326,71 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
           (frame) => frame.offsetLeft + frame.offsetWidth / 2,
         );
         frameWidths = frames.map((frame) => frame.offsetWidth);
+        pitch =
+          frameCenters.length > 1
+            ? frameCenters[1] - frameCenters[0]
+            : viewport.clientWidth;
         measuredWidth = viewport.clientWidth;
+        /* 锚点：把第一格摆到屏幕正中的那个位移。
+           复位与起点都以它为基准，滚动区间才不会偏到一边。 */
+        const nextAnchor = viewport.clientWidth / 2 - frameCenters[0];
+        if (anchor !== 0) {
+          x += nextAnchor - anchor;
+          targetX += nextAnchor - anchor;
+        }
+        anchor = nextAnchor;
       };
       measure();
+      /* 起点退后整整一份：第一份留在左缘外，正中才是下一份的首帧，
+         否则轨道右移后会露出左侧空白。 */
+      x = anchor - setWidth;
+      targetX = anchor - setWidth;
 
-      // 左近右远：视点在画面左侧，轨道朝右侧退，左端因此最大、最清晰。
-      gsap.set(track, { x: 0, rotationX: BASE_RX, rotationY: BASE_RY });
-
-      const applyDepth = () => {
+      const applyCarousel = () => {
         if (measuredWidth !== viewport.clientWidth) measure();
         const vw = viewport.clientWidth;
-        const horizon = vw * 0.62;
-        // 焦点帧：离视口左侧 22% 那条"灯柱"最近的那一格。
-        // 它离镜头最近、被透视放到最大，所以由它来扛那块 0.9 的投影。
-        let leadIndex = -1;
-        let leadDistance = Infinity;
+        const axis = vw / 2;
+        let focusIndex = -1;
+        let focusDelta = Infinity;
+
         for (let i = 0; i < frames.length; i += 1) {
+          const frame = frames[i];
+          const card = cards[i];
+          const width = frameWidths[i] || 1;
           const center = frameCenters[i] + x;
-          frames[i].classList.toggle("is-deep", center > horizon);
-          if (center < -frameWidths[i] * 0.5 || center > vw) continue;
-          const distance = Math.abs(center - vw * 0.34);
-          if (distance < leadDistance) {
-            leadDistance = distance;
-            leadIndex = i;
+          /* 以"卡宽"为单位的偏移：0 = 正中，1 = 相邻那一格。
+             再 clamp 到 ±1.8，远处的帧不会继续转到背面去。 */
+          const raw = (center - axis) / width;
+          const t = Math.max(-1.8, Math.min(1.8, raw));
+          const away = Math.min(Math.abs(t), 1);
+
+          /* 右侧（t > 0）角度为负 → 卡片左转、朝内；左侧为正 → 右转、朝内。
+             两侧同时后退并缩小，围出一个以中轴为圆心的弧。 */
+          const angle = -MAX_ANGLE * t;
+          const depth = -MAX_DEPTH * away;
+          const scale = 1 - (1 - MIN_SCALE) * away;
+          const opacity = 1 - (1 - SIDE_OPACITY) * away;
+
+          /* 侧格先往中轴收一点，再旋转后退：45deg 的侧转本身就把卡片
+             往外甩，不收这一下左右邻居只剩一条边露在视口里。 */
+          const pull = -t * 110;
+          frame.style.transform = `translateX(${pull.toFixed(1)}px) rotateY(${angle.toFixed(2)}deg) translateZ(${depth.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+          frame.style.opacity = opacity.toFixed(3);
+          /* 0 = 正中（彩色、明亮），1 = 两侧（黑白、压暗）；
+             画面滤镜与投影都由这个变量在 CSS 里换算。 */
+          card?.style.setProperty("--depth-dim", away.toFixed(3));
+
+          const delta = Math.abs(center - axis);
+          if (delta < focusDelta) {
+            focusDelta = delta;
+            focusIndex = i;
           }
         }
-        for (let i = 0; i < frames.length; i += 1) {
-          frames[i]
-            .querySelector(".frame-card")
-            ?.classList.toggle("is-lead", i === leadIndex);
-        }
 
-        // 焦点帧换算成第几个项目，喂给底部刻度尺。
+        // 正中那格换算成第几个项目，喂给底部刻度尺。
         // 只在真的换帧时 setState，免得每帧都触发一次 React 渲染。
-        if (leadIndex >= 0) {
-          const projectIndex = leadIndex % PROJECTS.length;
+        if (focusIndex >= 0) {
+          const projectIndex = focusIndex % PROJECTS.length;
           if (projectIndex !== activeIndexRef.current) {
             activeIndexRef.current = projectIndex;
             setActiveIndex(projectIndex);
@@ -373,16 +408,13 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
               ? viewport.clientHeight
               : 1;
         const delta = event.deltaY * unit;
-        // 向下滚（deltaY > 0）→ 轨道 x 变小 → 胶片向左滑。
+        // 向下滚（deltaY > 0）→ 轨道 x 变小 → 卡片整体向左转。
         targetX -= delta * WHEEL_SPEED;
-        const push = gsap.utils.clamp(-1, 1, -delta / 220);
-        targetRy = BASE_RY - push * ROLL;
         lastInputAt = performance.now();
       };
       viewport.addEventListener("wheel", onWheel, { passive: false });
 
-      /* 键盘用户：Tab 到某张卡片时把胶片滚到它身上。
-         焦点卡片停在视口左侧 30% 处——离镜头最近的一带，最清晰。 */
+      /* 键盘用户：Tab 到某张卡片时把它送到屏幕正中。 */
       const onFocusIn = (event: FocusEvent) => {
         const target = event.target as HTMLElement | null;
         /* 只对键盘焦点让位：鼠标点击同样会触发 focus，若这时把胶片滑走，
@@ -392,53 +424,48 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         if (!frame) return;
         const index = frames.indexOf(frame);
         if (index < 0) return;
-        targetX = viewport.clientWidth * 0.3 - frameCenters[index];
+        targetX = viewport.clientWidth / 2 - frameCenters[index];
       };
       viewport.addEventListener("focusin", onFocusIn);
 
       const tick = () => {
         if (paused) return;
 
+        /* 松手后吸附：始终让一格停在中轴上，
+           否则滚轮停下时常卡在两格之间，正中就没有『那张卡』。 */
+        if (pitch > 0 && performance.now() - lastInputAt > 140) {
+          targetX = anchor + Math.round((targetX - anchor) / pitch) * pitch;
+        }
+
         x += (targetX - x) * DAMPING;
 
         // 无缝复位：x 落在一整段之外时平移回来，targetX 同步，阻尼不变。
         if (setWidth > 0) {
-          while (x <= -setWidth) {
+          while (x < anchor - setWidth) {
             x += setWidth;
             targetX += setWidth;
           }
-          while (x > 0) {
+          while (x > anchor) {
             x -= setWidth;
             targetX -= setWidth;
           }
         }
 
-        if (performance.now() - lastInputAt > 160) targetRy = BASE_RY;
-        currentRy += (targetRy - currentRy) * 0.12;
-
-        /* 旋转轴必须钉在"当前位于视口左缘的那一点"，而不是轨道起点：
-           轨道有 33 帧、一万多像素长，绕固定点旋转会把远处的帧推到镜头后面
-           （整条带被压成一条细缝）。轴跟着 x 走，深度就只由"卡片离左缘多远"
-           决定：越靠左越近越大，越靠右越深越小。 */
-        gsap.set(track, {
-          x,
-          rotationY: currentRy,
-          transformOrigin: `${-x}px 50%`,
-        });
-        applyDepth();
+        gsap.set(track, { x });
+        applyCarousel();
       };
       gsap.ticker.add(tick);
 
       /**
-       * 刻度导航：把第 index 个项目送到"灯柱"（视口 34%）位置。
-       * 三段副本里挑离焦点最近的那一份，算出它要补的位移；
+       * 刻度导航：把第 index 个项目送到屏幕正中。
+       * 三段副本里挑离中轴最近的那一份，算出它要补的位移；
        * 直接把结果写进 targetX，让既有的阻尼循环去完成缓动——
        * 不必另起一条 tween，也不会打乱 x 的复位区间。
        */
       const navigateTo = (index: number) => {
         const total = PROJECTS.length;
         const target = ((index % total) + total) % total;
-        const focus = viewport.clientWidth * 0.34;
+        const focus = viewport.clientWidth / 2;
         let bestCenter = 0;
         let bestDistance = Infinity;
         for (let copy = 0; copy < LOOP_COPIES; copy += 1) {
@@ -452,7 +479,6 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
           }
         }
         targetX = x + (focus - bestCenter);
-        targetRy = BASE_RY;
       };
 
       motionControlRef.current = {
@@ -467,7 +493,7 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
 
       const refresh = () => {
         measure();
-        applyDepth();
+        applyCarousel();
       };
 
       // Web fonts can change the track width after the first measurement.
@@ -481,9 +507,14 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
         motionControlRef.current = null;
         gsap.ticker.remove(tick);
         gsap.set(track, { clearProps: "transform" });
-        for (const frame of frames) frame.classList.remove("is-deep");
+        for (let i = 0; i < frames.length; i += 1) {
+          frames[i].style.removeProperty("transform");
+          frames[i].style.removeProperty("opacity");
+          cards[i]?.style.removeProperty("--depth-dim");
+        }
       };
     });
+
     return () => mm.revert();
   }, []);
 

@@ -363,12 +363,9 @@ html.detail-open .timeline-nav {
 .film-scroller {
   width: 100%;
   min-width: 0;
-  /* 暗房里的透视：视点压在画面左侧，整条底片朝右后方退。
-     于是左端卡片离镜头最近（最大、最清晰），右端一直缩进深处。 */
-  /* 1000px 会把 25° 的远端压缩得太狠，主帧反而显小；
-     1300px 保留同样的纵深，但近端能真正撑开。 */
-  perspective: 1000px;
-  perspective-origin: 10% 50%;
+  /* 旋转木马的镜头：视点在画面正中，左右两列卡片绕着中轴往后退。 */
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
   /* mask 只作用于元素自身的盒子，投影长在盒子外就会被一起裁掉。
      上下各撑 6rem 再用负 margin 抵消，盒子够高、版面位置不变。 */
   padding-block: 6rem;
@@ -379,14 +376,14 @@ html.detail-open .timeline-nav {
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0%,
-    #000 12%,
+    #000 15%,
     #000 85%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to right,
     transparent 0%,
-    #000 12%,
+    #000 15%,
     #000 85%,
     transparent 100%
   );
@@ -398,27 +395,29 @@ html.detail-open .timeline-nav {
   align-items: center;
   /* 12px 的黑缝：帧与帧之间不再相连，每一格是一段被剪下来的底片。
      缝里透的是页面底色，不是片基色——切片感来自这个"断开"。 */
-  gap: 12px;
+  gap: 20px;
   margin: 0;
+  padding: 0;
   list-style: none;
-  /* start pad: clear of the 15% left fade so the lead frame is whole. */
-  padding: 0 0 0 12vw;
   background-color: transparent;
-  /* 3D 上下文交给 GSAP 写入的 rotateX/rotateY；卡片靠 translateZ 从带子里抽出来。
-     镜头在左侧，所以旋转轴钉在轨道左端——否则 33 帧（≈1.4 万 px）绕自身中心
-     旋转，可见区会被甩出画面。 */
+  /* 轨道只做水平平移；每一格的角度/纵深由 JS 按"离中轴多远"逐帧写入。 */
   transform-style: preserve-3d;
-  transform-origin: 0% 50%;
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
 
 .film-frame {
   flex: none;
-  /* 一帧就是一块真正的画格：够大，才撑得住 25° 的侧透视。 */
-  /* 45vw is the ruler; the cap goes to 880px so a 2560-wide screen still gets a huge lead frame. */
-  width: clamp(500px, 45vw, 880px);
+  /* 正中那格要占到屏幕的大半：60vw，宽屏上限 860px。 */
+  /* 60vw 会把左右邻居整个挤出视口，旋转木马就没有『环』了；
+     46vw 让两侧各露出一半，扇面才立得起来。 */
+  width: clamp(440px, 46vw, 760px);
   /* 让 .frame-card 的 translateZ 参与同一条透视，而不是被拍平。 */
   transform-style: preserve-3d;
-  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+  /* 角度与位移每帧都在变，transition 只会让木马拖影，所以不加。 */
+  transition: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -439,16 +438,18 @@ html.detail-open .timeline-nav {
   perspective: 1100px;
   perspective-origin: 50% 50%;
   transform-origin: 50% 50%;
-  /* 一格底片压在黑底上：贴地的一层暗影让它浮起来。 */
-  /* 纯黑背景吞掉一切投影，所以再补一道 1px 的冷光轮廓，
-     让每格底片在暗处仍然有边。 */
+  /* 0 = 正中（最亮最深的一块投影），1 = 两侧（投影收薄）。 */
+  --depth-dim: 0;
+  /* 正中那格像压着一块石头：0 40px 80px / 0.8；两侧递减。
+     纯黑背景吞掉全部投影，所以再补一道 1px 冷光轮廓，暗处仍有边。 */
   box-shadow:
-    0 12px 30px rgb(0 0 0 / 0.7),
+    0 calc(40px * (1 - var(--depth-dim) * 0.5))
+      calc(80px * (1 - var(--depth-dim) * 0.5))
+      rgb(0 0 0 / calc(0.8 - var(--depth-dim) * 0.55)),
     0 0 0 1px rgb(255 255 255 / 0.05);
   transition:
     transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    box-shadow 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    opacity 240ms ease;
+    box-shadow 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 
@@ -582,10 +583,11 @@ html.detail-open .timeline-nav {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  /* 默认是一张高反差的直印黑白：压暗、提对比、彻底去色。
-     数码感来自"灰蒙蒙的中灰"，所以亮度压到 0.6，让黑真正落下去。 */
-  filter: grayscale(100%) contrast(1.5) brightness(0.6);
-  /* 只过渡 filter——不加 opacity/transform 一起动，显影才不会闪。 */
+  /* 显影由 --depth-dim 驱动：正中 0 → 彩色、明亮；
+     两侧 1 → 彻底去色、压暗、提对比。 */
+  filter: grayscale(calc(var(--depth-dim) * 100%))
+    contrast(calc(1.15 + var(--depth-dim) * 0.35))
+    brightness(calc(0.95 - var(--depth-dim) * 0.35));
   transition: filter 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -1007,57 +1009,6 @@ html.detail-open .timeline-nav {
     opacity: 1;
     pointer-events: auto;
     transform: none;
-  }
-
-  /* 其余帧收一档亮度，但不压到黑：底片还是底片，只是当前这格被灯照到。 */
-  .film-track:has(.frame-card:hover) .frame-card,
-  .film-track:has(.frame-card:has(.frame-hit:focus-visible)) .frame-card,
-  .film-track:has(.frame-card.is-just-closed) .frame-card {
-    opacity: 0.62;
-  }
-
-  .film-track:has(.frame-card:hover) .frame-card:hover,
-  .film-track:has(.frame-card:has(.frame-hit:focus-visible))
-    .frame-card:has(.frame-hit:focus-visible),
-  .film-track:has(.frame-card.is-just-closed) .frame-card.is-just-closed {
-    opacity: 1;
-  }
-  /* 没被抽出来的帧退后 20px：透视会把这点 Z 差放大成清晰的前后层次。 */
-  .film-track:has(.frame-card:hover) .frame-card:not(:hover),
-  .film-track:has(.frame-card:has(.frame-hit:focus-visible))
-    .frame-card:not(:has(.frame-hit:focus-visible)),
-  .film-track:has(.frame-card.is-just-closed)
-    .frame-card:not(.is-just-closed) {
-    transform: translateZ(-20px);
-  }
-
-  .film-frame:has(+ .film-frame .frame-card:hover),
-  .film-frame:has(+ .film-frame .frame-card:has(.frame-hit:focus-visible)),
-  .film-frame:has(+ .film-frame .frame-card.is-just-closed) {
-    transform: translateX(-10px);
-  }
-
-  .film-frame:has(.frame-card:hover) + .film-frame,
-  .film-frame:has(.frame-card:has(.frame-hit:focus-visible)) + .film-frame,
-  .film-frame:has(.frame-card.is-just-closed) + .film-frame {
-    transform: translateX(10px);
-  }
-}
-/* 景深：卷轴远端（视口右侧）的帧失焦并退进暗部。
-   blur 只加在卡片自身——加在 .film-frame 上会生成压平组，把卡片的 translateZ 吃掉。 */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  .frame-card.is-deep:not(:hover):not(:has(.frame-hit:focus-visible)) {
-    filter: blur(1px);
-    opacity: 0.6;
-  }
-
-  /* 焦点帧：最靠左、离镜头最近的那一格要有一块"山"的重量，
-     投影压到 0.9 才镇得住纯黑背景。 */
-  .frame-card.is-lead:not(:hover):not(:has(.frame-hit:focus-visible)) {
-    box-shadow:
-      0 30px 60px rgb(0 0 0 / 0.9),
-      0 10px 20px rgb(0 0 0 / 0.75),
-      0 0 0 1px rgb(255 255 255 / 0.07);
   }
 }
 

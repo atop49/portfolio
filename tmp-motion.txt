@@ -1,0 +1,202 @@
+    mm.add(DESKTOP_MOTION, () => {
+      /* 3D 旋转木马（Cover Flow）：轨道本身只做水平平移，
+         每一格的角度/纵深/缩放都由"它离屏幕中轴多远"算出来——
+         正中那格正面朝人，两侧 ±45° 向内转、后退 200px、缩到 0.8。
+         轨道内容复制三段，滑出一整段就瞬间平移回来，所以永远滑不到头。 */
+      const WHEEL_SPEED = 0.9;
+      const DAMPING = 0.12;
+      const MAX_ANGLE = 45;
+      const MAX_DEPTH = 200;
+      const MIN_SCALE = 0.8;
+      const SIDE_OPACITY = 0.6;
+
+      let setWidth = 0;
+      let x = 0;
+      let targetX = 0;
+      let paused = false;
+
+      const frames = Array.from(
+        track.querySelectorAll<HTMLElement>(".film-frame"),
+      );
+      const cards = frames.map((frame) =>
+        frame.querySelector<HTMLElement>(".frame-card"),
+      );
+      let frameCenters: number[] = [];
+      let frameWidths: number[] = [];
+      let measuredWidth = -1;
+
+      const measure = () => {
+        /* 复位的步长必须是"同一张卡片"在两个副本之间的位移差，
+           不能用 scrollWidth / 3——那样会把两端各多出的一个 gap 摊进去，
+           每绕一圈就悄悄错开几个像素。 */
+        const perCopy = PROJECTS.length;
+        setWidth =
+          frames.length >= perCopy * 2
+            ? frames[perCopy].offsetLeft - frames[0].offsetLeft
+            : track.scrollWidth / LOOP_COPIES;
+        frameCenters = frames.map(
+          (frame) => frame.offsetLeft + frame.offsetWidth / 2,
+        );
+        frameWidths = frames.map((frame) => frame.offsetWidth);
+        measuredWidth = viewport.clientWidth;
+      };
+      measure();
+
+      const applyCarousel = () => {
+        if (measuredWidth !== viewport.clientWidth) measure();
+        const vw = viewport.clientWidth;
+        const axis = vw / 2;
+        let focusIndex = -1;
+        let focusDelta = Infinity;
+
+        for (let i = 0; i < frames.length; i += 1) {
+          const frame = frames[i];
+          const card = cards[i];
+          const width = frameWidths[i] || 1;
+          const center = frameCenters[i] + x;
+          /* 以"卡宽"为单位的偏移：0 = 正中，1 = 相邻那一格。
+             再 clamp 到 ±1.8，远处的帧不会继续转到背面去。 */
+          const raw = (center - axis) / width;
+          const t = Math.max(-1.8, Math.min(1.8, raw));
+          const away = Math.min(Math.abs(t), 1);
+
+          /* 右侧（t > 0）角度为负 → 卡片左转、朝内；左侧为正 → 右转、朝内。
+             两侧同时后退并缩小，围出一个以中轴为圆心的弧。 */
+          const angle = -MAX_ANGLE * t;
+          const depth = -MAX_DEPTH * away;
+          const scale = 1 - (1 - MIN_SCALE) * away;
+          const opacity = 1 - (1 - SIDE_OPACITY) * away;
+
+          frame.style.transform = `rotateY(${angle.toFixed(2)}deg) translateZ(${depth.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+          frame.style.opacity = opacity.toFixed(3);
+          /* 0 = 正中（彩色、明亮），1 = 两侧（黑白、压暗）；
+             画面滤镜与投影都由这个变量在 CSS 里换算。 */
+          card?.style.setProperty("--depth-dim", away.toFixed(3));
+
+          const delta = Math.abs(center - axis);
+          if (delta < focusDelta) {
+            focusDelta = delta;
+            focusIndex = i;
+          }
+        }
+
+        // 正中那格换算成第几个项目，喂给底部刻度尺。
+        // 只在真的换帧时 setState，免得每帧都触发一次 React 渲染。
+        if (focusIndex >= 0) {
+          const projectIndex = focusIndex % PROJECTS.length;
+          if (projectIndex !== activeIndexRef.current) {
+            activeIndexRef.current = projectIndex;
+            setActiveIndex(projectIndex);
+          }
+        }
+      };
+
+      const onWheel = (event: WheelEvent) => {
+        if (paused || event.ctrlKey) return;
+        event.preventDefault();
+        const unit =
+          event.deltaMode === 1
+            ? 16
+            : event.deltaMode === 2
+              ? viewport.clientHeight
+              : 1;
+        const delta = event.deltaY * unit;
+        // 向下滚（deltaY > 0）→ 轨道 x 变小 → 卡片整体向左转。
+        targetX -= delta * WHEEL_SPEED;
+      };
+      viewport.addEventListener("wheel", onWheel, { passive: false });
+
+      /* 键盘用户：Tab 到某张卡片时把它送到屏幕正中。 */
+      const onFocusIn = (event: FocusEvent) => {
+        const target = event.target as HTMLElement | null;
+        /* 只对键盘焦点让位：鼠标点击同样会触发 focus，若这时把胶片滑走，
+           mousedown 与 mouseup 会落在不同元素上，点击就作废了。 */
+        if (!target || !target.matches(":focus-visible")) return;
+        const frame = target.closest(".film-frame") as HTMLElement | null;
+        if (!frame) return;
+        const index = frames.indexOf(frame);
+        if (index < 0) return;
+        targetX = viewport.clientWidth / 2 - frameCenters[index];
+      };
+      viewport.addEventListener("focusin", onFocusIn);
+
+      const tick = () => {
+        if (paused) return;
+
+        x += (targetX - x) * DAMPING;
+
+        // 无缝复位：x 落在一整段之外时平移回来，targetX 同步，阻尼不变。
+        if (setWidth > 0) {
+          while (x <= -setWidth) {
+            x += setWidth;
+            targetX += setWidth;
+          }
+          while (x > 0) {
+            x -= setWidth;
+            targetX -= setWidth;
+          }
+        }
+
+        gsap.set(track, { x });
+        applyCarousel();
+      };
+      gsap.ticker.add(tick);
+
+      /**
+       * 刻度导航：把第 index 个项目送到屏幕正中。
+       * 三段副本里挑离中轴最近的那一份，算出它要补的位移；
+       * 直接把结果写进 targetX，让既有的阻尼循环去完成缓动——
+       * 不必另起一条 tween，也不会打乱 x 的复位区间。
+       */
+      const navigateTo = (index: number) => {
+        const total = PROJECTS.length;
+        const target = ((index % total) + total) % total;
+        const focus = viewport.clientWidth / 2;
+        let bestCenter = 0;
+        let bestDistance = Infinity;
+        for (let copy = 0; copy < LOOP_COPIES; copy += 1) {
+          const i = copy * total + target;
+          if (i >= frameCenters.length) continue;
+          const screen = frameCenters[i] + x;
+          const distance = Math.abs(screen - focus);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestCenter = screen;
+          }
+        }
+        targetX = x + (focus - bestCenter);
+      };
+
+      motionControlRef.current = {
+        pause: () => {
+          paused = true;
+        },
+        resume: () => {
+          paused = false;
+        },
+        navigate: navigateTo,
+      };
+
+      const refresh = () => {
+        measure();
+        applyCarousel();
+      };
+
+      // Web fonts can change the track width after the first measurement.
+      document.fonts?.ready.then(refresh);
+      window.addEventListener("resize", refresh);
+
+      return () => {
+        viewport.removeEventListener("wheel", onWheel);
+        viewport.removeEventListener("focusin", onFocusIn);
+        window.removeEventListener("resize", refresh);
+        motionControlRef.current = null;
+        gsap.ticker.remove(tick);
+        gsap.set(track, { clearProps: "transform" });
+        for (let i = 0; i < frames.length; i += 1) {
+          frames[i].style.removeProperty("transform");
+          frames[i].style.removeProperty("opacity");
+          cards[i]?.style.removeProperty("--depth-dim");
+        }
+      };
+    });
