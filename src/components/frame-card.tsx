@@ -161,10 +161,20 @@ export default function FrameCard({
       <div className="frame-sprocket frame-sprocket-top" aria-hidden="true" />
 
       <div ref={windowRef} className="frame-window">
-        {/* One still per frame; hover develops it in place via one filter. */}
+        {/* 两层同一张图：底层是跟着景深走的黑白印样，上面盖一层预先调好的彩色版本，
+            hover 只把它淡进来。显影不再改 filter——改 filter 会让浏览器每帧重建一次
+            滤镜图层，在 preserve-3d 的胶片带里连带重建整棵图层树，左侧邻卡会被错裁。 */}
         <div className="frame-media" aria-hidden="true">
           <Image
             className="frame-image"
+            src={project.image}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 28vw, 100vw"
+            unoptimized
+          />
+          <Image
+            className="frame-image frame-image-developed"
             src={project.image}
             alt=""
             fill

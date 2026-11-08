@@ -401,7 +401,7 @@ html.detail-open .timeline-nav {
   /* 卡片自身裁一次：.frame-window 会被指针 3D 旋转，投影会越出卡片盒子
      几十像素，正好盖到左侧邻卡右缘上（hover 中间卡时邻卡右半忽隐忽现就是这么来的）。
      裁在卡片上只吃掉窗口溢出的那点投影，卡片作为平面整体旋转的轮廓不受影响。 */
-  overflow: hidden;
+  overflow: visible;
   border: 0;
   border-radius: 0;
   /* 纯黑片基：齿孔是靠 luminance 蒙版真打穿的，透出来的是这一层，
@@ -559,7 +559,19 @@ html.detail-open .timeline-nav {
   filter: grayscale(calc(var(--depth-dim) * 100%))
     contrast(calc(1.15 + var(--depth-dim) * 0.35))
     brightness(calc(0.95 - var(--depth-dim) * 0.35));
-  transition: filter 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* 这里不要给 filter 加 transition：--depth-dim 每帧都在变，过渡等于
+     逼浏览器每帧重建滤镜图层。显影改用上面那层 opacity 交叉淡入。 */
+}
+
+/* 彩色印样：和底层同一张图，只是预先调好「显影完成」的样子。
+   hover 仅淡入它的 opacity —— 不动 filter，就不会每帧重建滤镜图层，
+   也就不会在 preserve-3d 的胶片带里牵连邻卡的图层树。 */
+.frame-image-developed {
+  z-index: 1;
+  filter: grayscale(0%) contrast(1.15) brightness(0.8);
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
 }
 
 .frame-scrim {
@@ -955,6 +967,7 @@ html.detail-open .timeline-nav {
       0 0 0 1px rgb(255 255 255 / 0.16);
   }
 
+  /* 扫光：一道 45° 的高光在 hover 时横着掠过窗口。 */
   .frame-card:hover .frame-window::before,
   .frame-card:has(.frame-hit:focus-visible) .frame-window::before,
   .frame-card.is-just-closed .frame-window::before {
@@ -962,12 +975,13 @@ html.detail-open .timeline-nav {
     transform: translateX(55%) skewX(-8deg);
   }
 
-  /* 显影：黑白直印在 300ms 里转回彩色，亮度也抬一档——
-     但比直印高一点点而已，否则从"黑片"跳成"网页图片"。 */
-  .frame-card:hover .frame-image,
-  .frame-card:has(.frame-hit:focus-visible) .frame-image,
-  .frame-card.is-just-closed .frame-image {
-    filter: grayscale(0%) contrast(1.15) brightness(0.8);
+  /* 显影：底层保持景深滤镜不动，只把上面那层彩色印样淡进来。
+     这里绝不能改 filter —— 那会让浏览器每帧重建滤镜图层，
+     在 preserve-3d 场景里重建图层树，左侧邻卡会被错裁一两帧。 */
+  .frame-card:hover .frame-image-developed,
+  .frame-card:has(.frame-hit:focus-visible) .frame-image-developed,
+  .frame-card.is-just-closed .frame-image-developed {
+    opacity: 1;
   }
 
   .frame-card:hover .frame-actions,
