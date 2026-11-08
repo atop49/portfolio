@@ -398,9 +398,10 @@ html.detail-open .timeline-nav {
   display: flex;
   height: auto;
   flex-direction: column;
-  /* 裁剪交给 .frame-window，卡片自身不再裁：留出余量，
-     旋转到位时不会被自己的盒子切掉一条边。 */
-  overflow: visible;
+  /* 卡片自身裁一次：.frame-window 会被指针 3D 旋转，投影会越出卡片盒子
+     几十像素，正好盖到左侧邻卡右缘上（hover 中间卡时邻卡右半忽隐忽现就是这么来的）。
+     裁在卡片上只吃掉窗口溢出的那点投影，卡片作为平面整体旋转的轮廓不受影响。 */
+  overflow: hidden;
   border: 0;
   border-radius: 0;
   /* 纯黑片基：齿孔是靠 luminance 蒙版真打穿的，透出来的是这一层，

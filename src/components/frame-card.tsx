@@ -140,7 +140,7 @@ export default function FrameCard({
     const window = windowRef.current;
     if (!window) return;
     gsap.killTweensOf(window);
-    gsap.set(window, { clearProps: "transform" });
+    gsap.set(window, { rotationX: 0, rotationY: 0 });
   };
 
   const open = () => {
