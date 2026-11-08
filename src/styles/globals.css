@@ -944,12 +944,15 @@ html.detail-open .timeline-nav {
   .frame-card:hover,
   .frame-card:has(.frame-hit:focus-visible),
   .frame-card.is-just-closed {
-    /* 这里不再做任何位移/缩放：旋转木马的角度由 JS 每帧写入，
-       hover 再抬一手会把左右邻帧的边缘盖掉一截（看起来像被切断）。
-       显影只靠下面的 filter 与投影换挡。 */
+    /* 投影几何在 hover 时保持不变：
+       之前把 80px 模糊的大投影换成 44px 的小投影，等于把盖在左右邻帧边缘上
+       的那层黑纱撤回，邻帧会跟着"亮一下/暗一下"，看起来像半张卡忽隐忽现。
+       现在只把 1px 冷光轮廓提亮，分层数量与基础状态一致，过渡仍是平滑的。 */
     box-shadow:
-      0 6px 14px rgb(0 0 0 / 0.6),
-      0 20px 44px rgb(0 0 0 / 0.8);
+      0 calc(40px * (1 - var(--depth-dim) * 0.5))
+        calc(80px * (1 - var(--depth-dim) * 0.5))
+        rgb(0 0 0 / calc(0.8 - var(--depth-dim) * 0.55)),
+      0 0 0 1px rgb(255 255 255 / 0.16);
   }
 
   .frame-card:hover .frame-window::before,
