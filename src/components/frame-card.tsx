@@ -132,7 +132,31 @@ export default function FrameCard({
     quickTiltRef.current.x(-py * 8);
   };
 
+  /* 显影：把 --develop 逐帧推到 1。用 GSAP 而不是 CSS transition ——
+     滚动时 --depth-dim 也是逐帧写进 style 的，那条路径已经证明不会闪；
+     而「切换一条 CSS 规则 + transition」会让浏览器给图片重新建图层，
+     在 preserve-3d 的胶片带里会连带重建整棵图层树，左邻卡被错裁一两帧。 */
+  const setDevelop = (value: 0 | 1, immediate = false) => {
+    const window = windowRef.current;
+    if (!window) return;
+    if (immediate) {
+      gsap.set(window, { "--develop": value });
+      return;
+    }
+    gsap.to(window, {
+      "--develop": value,
+      duration: 0.32,
+      ease: "power2.out",
+      overwrite: "auto",
+    });
+  };
+
+  const handlePointerEnter = () => {
+    setDevelop(1);
+  };
+
   const handlePointerLeave = () => {
+    setDevelop(0);
     resetTiltRef.current();
   };
 
@@ -155,26 +179,19 @@ export default function FrameCard({
       ref={cardRef}
       className="frame-card"
       onPointerMove={handlePointerMove}
+      onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
     >
       <div className="frame-sprocket frame-sprocket-top" aria-hidden="true" />
 
       <div ref={windowRef} className="frame-window">
-        {/* 两层同一张图：底层是跟着景深走的黑白印样，上面盖一层预先调好的彩色版本，
-            hover 只把它淡进来。显影不再改 filter——改 filter 会让浏览器每帧重建一次
-            滤镜图层，在 preserve-3d 的胶片带里连带重建整棵图层树，左侧邻卡会被错裁。 */}
+        {/* 显影 = 一个 --develop 变量：底层图片的滤镜同时受景深（--depth-dim）和它影响，
+            hover 时用 GSAP 逐帧把这变量推到 1。不换 CSS 规则、不加 transition，
+            和滚动时逐帧改 --depth-dim 走的是同一条路径——那条路径不闪。 */}
         <div className="frame-media" aria-hidden="true">
           <Image
             className="frame-image"
-            src={project.image}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 28vw, 100vw"
-            unoptimized
-          />
-          <Image
-            className="frame-image frame-image-developed"
             src={project.image}
             alt=""
             fill

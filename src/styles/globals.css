@@ -554,24 +554,21 @@ html.detail-open .timeline-nav {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  /* 显影由 --depth-dim 驱动：正中 0 → 彩色、明亮；
-     两侧 1 → 彻底去色、压暗、提对比。 */
-  filter: grayscale(calc(var(--depth-dim) * 100%))
-    contrast(calc(1.15 + var(--depth-dim) * 0.35))
-    brightness(calc(0.95 - var(--depth-dim) * 0.35));
-  /* 这里不要给 filter 加 transition：--depth-dim 每帧都在变，过渡等于
-     逼浏览器每帧重建滤镜图层。显影改用上面那层 opacity 交叉淡入。 */
+  /* 显影由两个变量共同决定：--depth-dim（正中 0 → 彩色明亮，两侧 1 → 去色压暗）
+     与 --develop（hover 时 0→1，把画面推向「洗出来的彩色印样」）。
+     不要给 filter 加 transition：两个变量每帧都在变，过渡等于逼浏览器逐帧重建滤镜图层。 */
+  filter: grayscale(calc(var(--depth-dim) * (1 - var(--develop)) * 100%))
+    contrast(calc(1.15 + var(--depth-dim) * 0.35 * (1 - var(--develop))))
+    brightness(
+      calc((0.95 - var(--depth-dim) * 0.35) * (1 - var(--develop)) + 0.8 * var(--develop))
+    );
 }
 
-/* 彩色印样：和底层同一张图，只是预先调好「显影完成」的样子。
-   hover 仅淡入它的 opacity —— 不动 filter，就不会每帧重建滤镜图层，
-   也就不会在 preserve-3d 的胶片带里牵连邻卡的图层树。 */
-.frame-image-developed {
-  z-index: 1;
-  filter: grayscale(0%) contrast(1.15) brightness(0.8);
-  opacity: 0;
-  transition: opacity 300ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  pointer-events: none;
+/* 显影：滤镜同时受景深（--depth-dim）与 hover 进度（--develop）影响。
+   --develop 由 frame-card.tsx 用 GSAP 逐帧写进来，和滚动时写 --depth-dim 是
+   同一条路径，不换 CSS 规则、不加 transition，避免重建图层牵连邻卡。 */
+.frame-window {
+  --develop: 0;
 }
 
 .frame-scrim {
@@ -975,13 +972,11 @@ html.detail-open .timeline-nav {
     transform: translateX(55%) skewX(-8deg);
   }
 
-  /* 显影：底层保持景深滤镜不动，只把上面那层彩色印样淡进来。
-     这里绝不能改 filter —— 那会让浏览器每帧重建滤镜图层，
-     在 preserve-3d 场景里重建图层树，左侧邻卡会被错裁一两帧。 */
-  .frame-card:hover .frame-image-developed,
-  .frame-card:has(.frame-hit:focus-visible) .frame-image-developed,
-  .frame-card.is-just-closed .frame-image-developed {
-    opacity: 1;
+  /* 显影不在这里改：hover 的渐变由 frame-card.tsx 逐帧写 --develop 完成，
+     用 CSS 规则 + transition 会重建图层、牵连邻卡。这里只处理「刚关掉检片台」
+     那一帧的余晖——一次性把变量顶到 1，动画结束后类名被移除。 */
+  .frame-card.is-just-closed .frame-window {
+    --develop: 1;
   }
 
   .frame-card:hover .frame-actions,
