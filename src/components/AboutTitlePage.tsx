@@ -79,10 +79,6 @@ export default function AboutTitlePage() {
           <div className="about-notes" data-about-reveal>
             <p className="about-block-label">Director&rsquo;s note</p>
             <p>我是一名大二学生，目前正在深入学习 AI 及其相关技术。</p>
-            <p>
-              因为对电影有着极度热爱，所以我把自己的作品集打造成了一台&ldquo;非线性剪辑台&rdquo;。
-              在这里，每一段代码、每一个项目，都是我剪出的一帧画面。
-            </p>
           </div>
 
           <div className="about-cast" data-about-reveal>
