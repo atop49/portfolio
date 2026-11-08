@@ -1506,16 +1506,6 @@ export default function FilmStrip({ onThemeChange }: FilmStripProps) {
           <span className="film-header-meta">{PROJECTS.length} frames · 2026</span>
         </header>
 
-        {/* 左缘铭文：竖排贴在画面最左侧，像胶片边缘的厂标。
-            它说明"这是一卷精选作品"，不跟任何一帧绑定，因此不会和卡片文字打架。 */}
-        <div className="film-rail" aria-hidden="true">
-          <span className="film-rail-label">Selected Works</span>
-          <span className="film-rail-rule" />
-          <span className="film-rail-meta">
-            Vol. 01 · 2026
-          </span>
-        </div>
-
         <div ref={viewportRef} className="film-viewport">
           <div className="film-scroller">
             <ul ref={trackRef} className="film-track">

@@ -300,56 +300,6 @@ html.detail-open .timeline-nav {
   opacity: 1;
 }
 
-/* 左缘铭文：像胶片边缘的厂标，竖着贴在画面最左边。
-   它只说明"这是一卷精选作品"，不承载任何单帧信息——
-   所以永远压在片带之上、不随滚动移动，也绝不和卡片挤在一起。 */
-.film-rail {
-  position: fixed;
-  top: 15%;
-  left: clamp(1.1rem, 2.2vw, 2.1rem);
-  z-index: 45;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  color: var(--text-primary);
-  pointer-events: none;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
-.film-rail-label {
-  font-family: var(--font-sans);
-  font-size: 0.625rem;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
-.film-rail-rule {
-  width: 1px;
-  height: 3.25rem;
-  background-color: currentColor;
-  opacity: 0.22;
-}
-
-.film-rail-meta {
-  font-family: var(--font-jetbrains-mono);
-  font-size: 0.5625rem;
-  line-height: 1;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  opacity: 0.6;
-  font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 1023px) {
-  .film-rail {
-    display: none;
-  }
-}
-
 .film-viewport {
   position: relative;
   display: flex;
