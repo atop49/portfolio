@@ -40,10 +40,13 @@ type FrameCardProps = {
 };
 
 /**
- * One film frame. A single still is enough now: the grade lives on the image
- * itself (`.frame-image`), so hovering crosses from a hard grayscale print to
- * full colour through one 300ms filter transition instead of cross-fading two
- * stacked copies.
+ * One film frame. The grade lives entirely on the image (`.frame-image`) and is
+ * driven by two CSS variables: `--depth-dim` (scroll position, written every
+ * frame by the carousel) and `--develop` (hover, tweened 0→1 by this
+ * component). Both are written frame by frame, so the browser never has to
+ * rebuild the image's filter layer mid-sweep — switching a CSS rule or
+ * transitioning `filter`/`opacity` instead makes Chromium re-rasterise the
+ * whole preserve-3d strip and clips the neighbouring card for a frame or two.
  *
  * The transparent `.frame-hit` button is the single tab stop per frame. Its
  * focus reveals the action group; Enter opens the detail viewer. The action
