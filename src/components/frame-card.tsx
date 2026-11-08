@@ -81,10 +81,14 @@ export default function FrameCard({
       canTiltRef.current = false;
       quickTiltRef.current = null;
       gsap.killTweensOf(frameWindow);
-      gsap.set(frameWindow, { clearProps: "transform" });
+      /* 只把角度归零、保留 transformPerspective：
+         clearProps 会连 perspective() 一起清掉，下次 hover 就变成没有纵深的平面旋转。 */
+      gsap.set(frameWindow, { rotationX: 0, rotationY: 0 });
     };
 
     const enableTilt = () => {
+      /* 透视写在窗口自身，卡片上不再挂 perspective（见 globals.css .frame-card 注释）。 */
+      gsap.set(frameWindow, { transformPerspective: 1100 });
       quickTiltRef.current = {
         x: gsap.quickTo(frameWindow, "rotationX", {
           duration: 0.38,
@@ -92,7 +96,6 @@ export default function FrameCard({
         }),
         y: gsap.quickTo(frameWindow, "rotationY", {
           duration: 0.38,
-          ease: "power2.out",
         }),
       };
       canTiltRef.current = true;

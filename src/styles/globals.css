@@ -407,11 +407,11 @@ html.detail-open .timeline-nav {
      所以它必须比页面底色更黑，孔才像"洞"而不是"印上去的方块"。 */
   background-color: #000;
   isolation: isolate;
-  perspective: 1100px;
-  perspective-origin: 50% 50%;
+  /* 透视不再挂在卡片上：卡片处在 .film-track 的 preserve-3d 里，
+     再嵌一层 perspective 会让 .frame-window（overflow:hidden 且被指针旋转）
+     在父级 3D 排序重算时按错误的空间裁切，表现为邻卡半张突然消失。
+     透视改为写进窗口自身的 transform（见 frame-card.tsx）。 */
   transform-origin: 50% 50%;
-  /* 0 = 正中（最亮最深的一块投影），1 = 两侧（投影收薄）。 */
-  --depth-dim: 0;
   /* 正中那格像压着一块石头：0 40px 80px / 0.8；两侧递减。
      纯黑背景吞掉全部投影，所以再补一道 1px 冷光轮廓，暗处仍有边。 */
   box-shadow:
