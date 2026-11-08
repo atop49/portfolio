@@ -1,48 +1,34 @@
-# 个人作品网站 · 胶片
+# 个人作品网站 · 胶片带
 
-一条悬浮在暗房里的胶片带：左端贴近镜头，右端退进深处，滚轮向下推动整条胶片向左滑，卡片一路从深处滑到面前并放大显影——永不到头。
+一个把作品做成胶片带的个人作品集：五个项目按帧排布在一条 3D 胶片带上，左侧贴着镜头、右侧退进深处；滚动即换帧，点开任意一帧会展开「检片台」，陈列大图与项目档案。
 
-作品按帧排列，点开任意一帧会展开检片台：大幅剧照、项目说明，以及一个只有文字、竖线和加号的 **EXPLORE** 触发器。悬停它，加号会旋转成一个绿色播放键。
+**技术栈**：Next.js 16（App Router，静态导出）· TypeScript · Tailwind CSS v4 · GSAP / Flip · GitHub Pages
 
-## 技术栈
+## 公网访问
 
-- **Next.js 16**（App Router / Turbopack）
-- **React 19** + **TypeScript**（strict）
-- **Tailwind CSS v4**（自定义 token，非默认色板）
-- **GSAP**（滚轮驱动的横向位移、阻尼、Flip 进出检片台）
-
-## 本地运行
-
-`ash
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # 生产构建
-`
-
-## 目录
-
-`
-src/app/          App Router 入口与全局布局
-src/components/   SiteShell / FilmStrip / FrameCard / ExploreTrigger / 各视图
-src/lib/          标题断行等纯函数
-src/styles/       globals.css：token 体系、胶片材质、检片台、刻度尺
-public/           插画（每帧 1600×900 的矢量剧照）
-`
-
-## 交互要点
-
-- **滚轮驱动**：胶片由 wheel 直接驱动，不是页面滚动；桌面端在 projects 视图里页面本身不滚动。
-- **无限循环**：轨道渲染三份相同的帧，向左滑出一整段后瞬时平移回来，肉眼无缝。
-- **左近右远**：透视原点在画面左缘，旋转轴跟着视口走，纵深只由"卡片离左缘多远"决定。
-- **降级**：≤1023px 退回原生横向滑动；prefers-reduced-motion 退回普通纵向文档流。
-
-## 相关项目
-
-胶片里的四个应用各自独立成库：
-
-| 项目 | 仓库 |
+| 站点 | 地址 |
 | --- | --- |
-| 待办事项 Studio | [todo-studio](https://github.com/atop49/todo-studio) |
-| Markdown 笔记 Studio | [notes-studio](https://github.com/atop49/notes-studio) |
-| 番茄钟 Studio | [pomodoro-studio](https://github.com/atop49/pomodoro-studio) |
-| 天气 Studio | [weather-studio](https://github.com/atop49/weather-studio) |
+| 主站 · 作品集 | https://atop49.github.io/portfolio/ |
+| 星雨汇 MeteorWatch · 流星雨观测指南 | https://atop49.github.io/meteorwatch/ |
+| 待办事项 Todo Studio | https://atop49.github.io/todo-studio/ |
+| Markdown 笔记 Notes Studio | https://atop49.github.io/notes-studio/ |
+| 番茄钟 Pomodoro Studio | https://atop49.github.io/pomodoro-studio/ |
+| 天气 Weather Studio | https://atop49.github.io/weather-studio/ |
+
+## 截图
+
+主站 · 胶片带
+
+![作品集首页](docs/images/01-portfolio.png)
+
+星雨汇 MeteorWatch
+
+![星雨汇](docs/images/02-meteorwatch.png)
+
+| 待办事项 | Markdown 笔记 |
+| --- | --- |
+| ![待办事项](docs/images/03-todo.png) | ![Markdown 笔记](docs/images/04-notes.png) |
+
+| 番茄钟 | 天气 |
+| --- | --- |
+| ![番茄钟](docs/images/05-pomodoro.png) | ![天气](docs/images/06-weather.png) |
